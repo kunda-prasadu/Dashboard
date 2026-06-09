@@ -145,3 +145,11 @@ Honest accounting of what we gave up for each architectural choice.
 **Gain:** Instant UI feedback — flagging a policy feels immediate.  
 **Cost:** On network error, the UI shows a brief flash of the optimistic state before rollback. Users may find this jarring.  
 **Mitigation:** Rollback is synchronous (signal update) so the flash is sub-frame. A toast notification on rollback tells the user what happened. `_lastFailedFlagIds` is exposed so the UI can highlight the affected rows.
+
+---
+
+## Branch Coverage Target (80%) vs 100%
+
+**Gain (80% target):** Focuses effort on behaviorally meaningful branches (optional HTTP params, guard clauses, optimistic rollback). Diminishing returns above ~85% for a UI project — the remaining uncovered branches are typically unreachable error conditions in third-party code paths or Angular framework internals counted by Istanbul.  
+**Cost:** Some branches (e.g., Material component internals surfaced through Istanbul) remain uncovered. A false sense of completeness if the team treats "80% branches" as "all critical paths tested."  
+**Mitigation:** Branch coverage is a proxy, not a goal. The test suite asserts specific behavioral contracts (flag success/failure/retry, URL-seed priority, optimistic rollback). Phase 9 raised branches from 73.68% to 86.46% by writing behaviorally meaningful tests, not by writing trivial throw-away tests to inflate the number.

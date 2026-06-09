@@ -104,6 +104,22 @@ describe('PolicyFilterComponent', () => {
       expect(result.premiumMin).toBe(5000);
       expect(result.effectiveDateFrom).toBe('2025-01-01');
     });
+
+    it('maps all four date fields when every date is set', async () => {
+      await setup();
+      const result = component.mapToStoreFilter({
+        search: null, statuses: [], linesOfBusiness: [], regions: [],
+        premiumMin: null,
+        effectiveDateFrom: new Date('2025-01-01'),
+        effectiveDateTo:   new Date('2025-06-30'),
+        expiryDateFrom:    new Date('2025-07-01'),
+        expiryDateTo:      new Date('2026-06-30')
+      } as any);
+      expect(result.effectiveDateFrom).toBe('2025-01-01');
+      expect(result.effectiveDateTo).toBe('2025-06-30');
+      expect(result.expiryDateFrom).toBe('2025-07-01');
+      expect(result.expiryDateTo).toBe('2026-06-30');
+    });
   });
 
   describe('syncUrl()', () => {
@@ -169,6 +185,24 @@ describe('PolicyFilterComponent', () => {
       await setup({}, { search: 'stored-search', statuses: ['Expired'] });
       expect(component.form.get('search')?.value).toBe('stored-search');
       expect(component.form.get('statuses')?.value).toEqual(['Expired']);
+    });
+
+    it('seeds premiumMin from URL param and converts to number', async () => {
+      await setup({ premiumMin: '5000' });
+      expect(component.form.get('premiumMin')?.value).toBe(5000);
+    });
+
+    it('seeds all date fields from URL params', async () => {
+      await setup({
+        effectiveDateFrom: '2025-01-01',
+        effectiveDateTo:   '2025-06-30',
+        expiryDateFrom:    '2025-07-01',
+        expiryDateTo:      '2026-06-30'
+      });
+      expect(component.form.get('effectiveDateFrom')?.value).toEqual(new Date('2025-01-01'));
+      expect(component.form.get('effectiveDateTo')?.value).toEqual(new Date('2025-06-30'));
+      expect(component.form.get('expiryDateFrom')?.value).toEqual(new Date('2025-07-01'));
+      expect(component.form.get('expiryDateTo')?.value).toEqual(new Date('2026-06-30'));
     });
   });
 

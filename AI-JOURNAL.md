@@ -131,3 +131,23 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Overrode:** Global `:focus-visible` outline was absent — Material resets the browser default. Added `3px solid var(--ph-primary)` outline globally in `styles.scss`. This is a WCAG 2.4.7 (Focus Visible, Level AA) requirement.
 
 **Why:** A skip link + `#main-content` target is mandatory (WCAG 2.4.1, Level A) for keyboard-only users who cannot skip the repeated toolbar on every page. Three years of browser support for `:focus-visible` makes it the right tool over `:focus` (which shows for mouse clicks too).
+
+---
+
+## Phase 9 — Test Coverage (CH-110)
+
+**Accepted:** Istanbul branch coverage as the primary gap metric. Statements (92%), functions (92%), and lines (96%) were already strong. Branches sat at 73.68% — the only metric below the 80% target — because every truthy branch in the "optional filter param" conditionals was untested.
+
+**Root cause analysis:** `buildFilterParams` in `PolicyApiService` had 7 `if` guards for `premiumMin`, `premiumMax`, four date-range fields, and `flaggedForReview`. All existing tests called `getAll` with `{ search, statuses, regions }` only — every truthy branch was dead to Istanbul.
+
+**Accepted:** One new `getAll` test with all optional params populated covers all 7 truthy branches in one sweep instead of adding 7 individual tests.
+
+**Accepted:** `policy-filter.component.spec.ts` needed two additions: (1) `mapToStoreFilter` called with all four date fields set covers `effectiveDateTo`, `expiryDateFrom`, `expiryDateTo` truthy branches; (2) a URL-seed test with `premiumMin` and all date URL params hits the `urlParamsToFilter` ternary and all `patchFormFromFilter` date-conversion branches simultaneously.
+
+**Accepted:** `renewPolicy('unknown-id')` test in the store spec. The `if (!original) return;` early-exit was never reached because every existing test called with a known ID. A single call with a non-existent ID exercises the guard and asserts `api.patch` was not called — clean behavioral test.
+
+**Accepted:** Stored page size test by providing a `StorageService` stub returning `50` (a valid `PAGE_SIZE_OPTIONS` value). This hits the `n && PAGE_SIZE_OPTIONS.includes(n) ? n : 25` truthy branch in the IIFE field initializer that normal tests skip (localStorage returns null by default in JSDOM).
+
+**Accepted:** `allSelected()` false-branch test in `policy-table.component.spec.ts`. The `ids.length > 0 &&` short-circuit's false path (when the policy list is empty) was never reached because the store stub always had 2 policies. Setting `storeSpy.policies.set([])` covers it.
+
+**Result:** 107/107 tests pass. Branch coverage: 73.68% → **86.46%** (+12.78pp). All four coverage metrics now exceed 80%: Statements 94.88%, Branches 86.46%, Functions 92.3%, Lines 96.8%.

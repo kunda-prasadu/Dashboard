@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { PolicyStore } from './policy.store';
 import { PolicyApiService } from '../services/policy-api.service';
+import { StorageService } from '../../../core/services/storage.service';
 import { Policy } from '../models/policy.model';
 import { PolicySummaryData } from '../models/policy-summary.model';
 import { NormalisedHttpError } from '../../../core/interceptors/error.interceptor';
@@ -27,6 +28,14 @@ const makeError = (status = 500): NormalisedHttpError => ({
   message: 'A server error occurred. Please try again later.',
   originalError: new HttpErrorResponse({ status })
 });
+
+function makeStorageSpy(pageSize: number | null = null) {
+  return {
+    get:    jasmine.createSpy('get').and.returnValue(pageSize),
+    set:    jasmine.createSpy('set'),
+    remove: jasmine.createSpy('remove')
+  };
+}
 
 describe('PolicyStore', () => {
   let store: PolicyStore;
@@ -195,6 +204,35 @@ describe('PolicyStore', () => {
 
       expect(store.policies().find(p => p.id === 'p1')?.status).toBe('Expired');
       expect(store.error()).toBeTruthy();
+    });
+
+    it('is a no-op when the policy id does not exist in the current list', () => {
+      // Hits the `if (!original) return;` early-exit branch
+      store.renewPolicy('unknown-id');
+      expect(apiSpy.patch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('page size initialisation from storage', () => {
+    it('uses stored page size when it is a valid PAGE_SIZE_OPTIONS value', () => {
+      const storageSpy = makeStorageSpy(50); // 50 is a valid option
+      apiSpy.getAll.and.returnValue(of({ data: [], total: 0 }));
+      apiSpy.getSummary.and.returnValue(of(makeSummary()));
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideZonelessChangeDetection(),
+          PolicyStore,
+          { provide: PolicyApiService, useValue: apiSpy },
+          { provide: StorageService, useValue: storageSpy }
+        ]
+      });
+      const freshStore = TestBed.inject(PolicyStore);
+      freshStore.loadPolicies();
+
+      const [,, page] = apiSpy.getAll.calls.mostRecent().args;
+      expect(page?.pageSize).toBe(50);
     });
   });
 });
