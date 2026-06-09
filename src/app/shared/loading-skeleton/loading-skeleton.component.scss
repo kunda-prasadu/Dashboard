@@ -1,0 +1,125 @@
+// loading-skeleton.component.scss
+//
+// Shimmer animation sweeps a gradient across each "bone" element.
+// All dimensions mirror the actual dashboard layout so the skeleton is
+// spatially accurate — the user's eyes don't need to re-adjust after load.
+
+:host { display: block; }
+
+// ── Shimmer keyframes ────────────────────────────────────────────────────────
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+// ── Base bone styles ─────────────────────────────────────────────────────────
+
+.bone {
+  border-radius: var(--ph-radius-sm);
+  background: var(--ph-surface-variant);
+  background-image: linear-gradient(
+    90deg,
+    var(--ph-surface-variant) 0px,
+    var(--ph-outline-variant) 40px,
+    var(--ph-surface-variant) 80px
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-image: none;
+  }
+}
+
+// ── Root container ───────────────────────────────────────────────────────────
+
+.skeleton-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ph-space-5);
+}
+
+// ── Filter bar ───────────────────────────────────────────────────────────────
+
+.skeleton-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ph-space-3);
+  flex-wrap: wrap;
+}
+
+.bone--search  { height: 40px; flex: 0 0 240px; border-radius: var(--ph-radius-lg); }
+.bone--select  { height: 40px; flex: 0 0 140px; border-radius: var(--ph-radius-lg); }
+.bone--btn     { height: 40px; flex: 0 0 100px; border-radius: var(--ph-radius-lg); }
+
+// ── Summary cards ────────────────────────────────────────────────────────────
+
+.skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--ph-space-4);
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ph-space-2);
+  padding: var(--ph-space-4);
+  border-radius: var(--ph-radius-md);
+  background: var(--ph-surface-variant);
+}
+
+.bone--icon   { height: 32px; width: 32px; border-radius: 50%; }
+.bone--count  { height: 28px; width: 60%; }
+.bone--label  { height: 14px; width: 80%; }
+
+// ── Table ────────────────────────────────────────────────────────────────────
+
+.skeleton-table {
+  border-radius: var(--ph-radius-md);
+  overflow: hidden;
+  box-shadow: var(--ph-shadow-sm);
+  background: var(--ph-surface);
+}
+
+.skeleton-thead {
+  display: flex;
+  align-items: center;
+  gap: var(--ph-space-4);
+  padding: var(--ph-space-3) var(--ph-space-4);
+  background: var(--ph-surface-variant);
+}
+
+.bone--th { height: 16px; flex-shrink: 0; }
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ph-space-4);
+  padding: var(--ph-space-3) var(--ph-space-4);
+  border-bottom: 1px solid var(--ph-outline-variant);
+
+  &:last-child { border-bottom: none; }
+}
+
+.bone--checkbox { height: 18px; width: 18px; flex-shrink: 0; border-radius: 2px; }
+.bone--cell-sm  { height: 14px; flex: 1 1 80px; }
+.bone--cell-md  { height: 14px; flex: 1 1 120px; }
+.bone--cell-lg  { height: 14px; flex: 2 1 200px; }
+.bone--badge    { height: 22px; flex: 0 0 70px; border-radius: var(--ph-radius-xl); }
+
+// ── Screen-reader only text ──────────────────────────────────────────────────
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

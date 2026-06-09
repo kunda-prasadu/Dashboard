@@ -113,3 +113,21 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Overrode:** Default `app.html` Angular scaffold (Angular logo + links). Replaced with a Material toolbar containing the product name and `ThemePickerComponent`. Updated `app.spec.ts` to assert on `.app-title` text instead of the removed `<h1>`.
 
 **Why:** WCAG AA contrast targets (≥4.5:1) are met by choosing token values analytically at authoring time — not left to browser heuristics. Both light and dark palettes are documented with computed contrast ratios in styles.scss comments.
+
+---
+
+## Phase 8 — Loading / Empty / Error States + Container + A11y
+
+**Accepted:** Skeleton screens over a spinner. Skeletons fill space with spatially accurate shapes — filter bar, 4 status cards, 8 table rows — so the user's eye lands in the right place before data loads. A spinner gives no spatial context.
+
+**Accepted:** `@defer (on idle)` around the table section. Filter bar and summary panel paint on first tick; Angular defers instantiating `PolicyTableComponent` and its Material imports until the browser is idle — faster LCP without splitting routes.
+
+**Accepted:** `role="alert"` on `ErrorStateComponent` (assertive, immediate announcement) vs `role="status"` + `aria-live="polite"` on loading and empty states (deferential, non-interrupting).
+
+**Accepted:** Dialog on `rowClick` (not navigation). Keeps filter state, scroll position, and selection intact. `MatDialog` provides `role="dialog"`, `aria-modal`, focus trap, ESC-to-close, and `restoreFocus: true` out of the box.
+
+**Overrode:** `PolicyOverviewPage` had its template inline. Extracted to `policy-overview.page.html` + `.scss` to accommodate the state-machine markup (loading / error / empty / data). Inline styles can't handle multi-branch `@if`/`@defer` readably.
+
+**Overrode:** Global `:focus-visible` outline was absent — Material resets the browser default. Added `3px solid var(--ph-primary)` outline globally in `styles.scss`. This is a WCAG 2.4.7 (Focus Visible, Level AA) requirement.
+
+**Why:** A skip link + `#main-content` target is mandatory (WCAG 2.4.1, Level A) for keyboard-only users who cannot skip the repeated toolbar on every page. Three years of browser support for `:focus-visible` makes it the right tool over `:focus` (which shows for mouse clicks too).

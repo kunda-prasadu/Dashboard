@@ -1,0 +1,56 @@
+// policy-detail-dialog.component.scss
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: var(--ph-space-2);
+  font: var(--mat-sys-title-large);
+  color: var(--ph-on-surface);
+}
+
+.flag-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--ph-expired);
+}
+
+.holder-name {
+  font: var(--ph-font-title);
+  color: var(--ph-on-surface-muted);
+  margin: 0 0 var(--ph-space-4);
+}
+
+.dialog-content {
+  min-width: 360px;
+  max-width: 520px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ph-space-4) var(--ph-space-6);
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ph-space-1);
+}
+
+.detail-label {
+  font: var(--ph-font-caption);
+  color: var(--ph-on-surface-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-value {
+  font: var(--ph-font-body);
+  font-weight: 500;
+  color: var(--ph-on-surface);
+}
+
+.status-badge {
+  font-weight: 600;
+}

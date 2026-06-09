@@ -13,7 +13,7 @@ A production-quality insurance policy management dashboard built with **Angular 
 | State | Custom signal store (`PolicyStore`) — no NgRx |
 | HTTP | `HttpClient` with functional interceptors (`withFetch`) |
 | Mock API | Custom Express ESM server (server-side filter/sort/paginate) |
-| Tests | Jasmine + Karma (85 specs, all green) |
+| Tests | Jasmine + Karma (100 specs, all green) |
 | Styles | SCSS + Material Design tokens |
 
 ---

@@ -1,0 +1,16 @@
+<!-- empty-state.component.html -->
+<div class="empty-state" role="status" aria-live="polite">
+  <mat-icon class="empty-icon" aria-hidden="true">search_off</mat-icon>
+  <h2 class="empty-title">No results found</h2>
+  <p class="empty-message">{{ message() }}</p>
+  <button
+    mat-flat-button
+    color="primary"
+    class="clear-btn"
+    aria-label="Clear all filters to see all policies"
+    (click)="onClear()"
+  >
+    <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+    Clear filters
+  </button>
+</div>

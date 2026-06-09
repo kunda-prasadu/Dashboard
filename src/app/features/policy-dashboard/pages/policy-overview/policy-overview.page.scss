@@ -1,0 +1,16 @@
+// policy-overview.page.scss
+
+.policy-overview-page {
+  padding: var(--ph-space-6);
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ph-space-5);
+}
+
+.page-title {
+  font: var(--ph-font-display);
+  color: var(--ph-on-surface);
+  margin: 0;
+}

@@ -1,0 +1,72 @@
+<!-- policy-detail-dialog.component.html -->
+<h2 mat-dialog-title class="dialog-title">
+  <span>{{ policy.policyNumber }}</span>
+  @if (policy.flaggedForReview) {
+    <mat-icon
+      class="flag-icon"
+      aria-label="Flagged for review"
+      matTooltip="Flagged for review"
+    >flag</mat-icon>
+  }
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <p class="holder-name">{{ policy.policyHolderName }}</p>
+
+  <div class="detail-grid">
+    <div class="detail-item">
+      <span class="detail-label">Status</span>
+      <span
+        class="detail-value status-badge"
+        [style.color]="statusColorMap[policy.status]"
+        [attr.aria-label]="'Status: ' + policy.status"
+      >{{ policy.status }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Line of Business</span>
+      <span class="detail-value">{{ policy.lineOfBusiness }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Region</span>
+      <span class="detail-value">{{ policy.region }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Currency</span>
+      <span class="detail-value">{{ policy.currency }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Premium</span>
+      <span class="detail-value">
+        {{ policy.premiumAmount | currency:policy.currency:'symbol':'1.0-0' }}
+      </span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Underwriter</span>
+      <span class="detail-value">{{ policy.underwriter }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Effective Date</span>
+      <span class="detail-value">{{ policy.effectiveDate | date:'dd MMM yyyy' }}</span>
+    </div>
+
+    <div class="detail-item">
+      <span class="detail-label">Expiry Date</span>
+      <span class="detail-value">{{ policy.expiryDate | date:'dd MMM yyyy' }}</span>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    aria-label="Close policy detail dialog"
+    (click)="close()"
+    cdkFocusInitial
+  >Close</button>
+</mat-dialog-actions>
