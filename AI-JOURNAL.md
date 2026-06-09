@@ -25,3 +25,17 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Challenged:** Initial `npm run start:api` test showed wrong summary counts (63/63/62/62) — stale process was still running on port 3000. Always kill the port before testing. Added `lsof -ti:3000 | xargs kill` to the test protocol.
 
 **Why:** Server-side filtering is a non-negotiable from the brief. Client-side filter-then-paginate would fail the grading criterion.
+
+---
+
+## Phase 2 — Models, API Service, Signal Store
+
+**Accepted:** String unions over TypeScript enums for PolicyStatus/LineOfBusiness/Region/Currency. Unions are lighter, tree-shakeable, and work natively with template literal types — enums add runtime overhead and an extra import in every file.
+
+**Overrode:** AI default of `takeUntilDestroyed()` with no argument inside class methods. Calling it without a `DestroyRef` only works in constructor/field-initialiser context (injection context). Passed explicit `inject(DestroyRef)` to all method-level subscriptions.
+
+**Overrode:** AI omitted `zone.js` from test polyfills entirely. Karma's runner requires zone.js even in a zoneless Angular app. Restored `zone.js/zone.js/testing` to test polyfills only, while keeping them out of the app build. Added `provideZonelessChangeDetection()` to every TestBed to ensure Angular uses zoneless CD inside tests.
+
+**Challenged:** Signal store `loadPolicies()` initially re-fetched page + summary in sequence. Switched to `forkJoin({ page, summary })` so both requests fire in parallel — halves the perceived load time.
+
+**Why:** `takeUntilDestroyed` without `DestroyRef` silently breaks in method scope; zoneless testing requires both zone.js (runner infra) and `provideZonelessChangeDetection()` (Angular CD).
