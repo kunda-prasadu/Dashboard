@@ -24,8 +24,8 @@ import {
   DestroyRef,
   inject,
   OnInit,
-  signal,
-  computed
+  computed,
+  signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -34,7 +34,7 @@ import {
   ReactiveFormsModule
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -46,6 +46,11 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatBottomSheet, MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import {
+  FilterBottomSheetComponent,
+  type FilterBottomSheetData
+} from '../filter-bottom-sheet/filter-bottom-sheet.component';
 
 import { PolicyStore } from '../../store/policy.store';
 import { StorageService } from '../../../../core/services/storage.service';
@@ -86,18 +91,20 @@ interface FilterFormValue {
     MatDatepickerModule,
     MatNativeDateModule,
     MatTooltipModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatBottomSheetModule
   ],
   templateUrl: './policy-filter.component.html',
   styleUrl: './policy-filter.component.scss'
 })
 export class PolicyFilterComponent implements OnInit {
-  private readonly store      = inject(PolicyStore);
-  private readonly storage    = inject(StorageService);
-  private readonly fb         = inject(FormBuilder);
-  private readonly router     = inject(Router);
-  private readonly route      = inject(ActivatedRoute);
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly store       = inject(PolicyStore);
+  private readonly storage     = inject(StorageService);
+  private readonly fb          = inject(FormBuilder);
+  private readonly router      = inject(Router);
+  private readonly route       = inject(ActivatedRoute);
+  private readonly destroyRef  = inject(DestroyRef);
+  private readonly bottomSheet = inject(MatBottomSheet);
 
   readonly statuses        = POLICY_STATUSES;
   readonly linesOfBusiness = LINES_OF_BUSINESS;
@@ -164,6 +171,18 @@ export class PolicyFilterComponent implements OnInit {
   }
 
   // ── Public methods (used by template + spec) ──────────────────────────────
+
+  openFilters(): void {
+    this.bottomSheet.open(FilterBottomSheetComponent, {
+      data: {
+        form:            this.form,
+        statuses:        this.statuses,
+        linesOfBusiness: this.linesOfBusiness,
+        regions:         this.regions
+      } satisfies FilterBottomSheetData,
+      panelClass: 'filter-bottom-sheet-panel'
+    });
+  }
 
   removeStatus(status: PolicyStatus): void {
     const current: PolicyStatus[] = this.form.get('statuses')?.value ?? [];

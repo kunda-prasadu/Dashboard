@@ -1,36 +1,18 @@
-<!--
-  policy-overview.page.html
-
-  State machine (priority order):
-    1. store.loading() + no cached data → loading skeleton (full page)
-    2. store.error()                    → error state + retry
-    3. store.total() === 0              → empty state + clear filters
-    4. default                          → live summary + table
-
-  @defer (on idle):
-    Defers PolicyTableComponent instantiation until the browser is idle.
-    The filter + summary panel render on the first tick; the table follows
-    when the browser has spare time — faster Largest Contentful Paint.
-
-  Accessibility landmarks:
-    <main id="main-content"> is the skip-link target from app.html.
-    <h1> is the sole top-level heading; <h2> is used inside dialogs.
--->
 <main id="main-content" class="policy-overview-page" aria-label="Policy portfolio dashboard">
 
-  <h1 class="page-title">Policy Portfolio</h1>
-
-  <!-- Always-visible filter bar — persists through loading/error/empty -->
-  <app-policy-filter />
+  <div class="page-header">
+    <h1 class="page-title">Policy Overview Dashboard</h1>
+    <p class="page-subtitle">
+      APAC Operations &middot; {{ store.summary().active + store.summary().pending + store.summary().expired + store.summary().cancelled }} total policies
+    </p>
+  </div>
 
   @if (store.loading() && !store.policies().length) {
 
-    <!-- ── Loading state ── -->
     <app-loading-skeleton />
 
   } @else if (store.error()) {
 
-    <!-- ── Error state ── -->
     <app-error-state
       [message]="store.error()!"
       (retry)="store.loadPolicies()"
@@ -38,11 +20,13 @@
 
   } @else {
 
-    <!-- ── Data available ── -->
     <app-summary-panel
       (statusClick)="onStatusDrilldown($event)"
       (expiryClick)="onExpiryDrilldown()"
     />
+
+    <!-- Filter bar sits below summary -->
+    <app-policy-filter />
 
     @if (store.hasSelection()) {
       <app-bulk-action-bar />
@@ -51,7 +35,6 @@
     @defer (on idle) {
 
       @if (store.total() === 0) {
-        <!-- ── Empty state (filters match nothing) ── -->
         <app-empty-state
           message="No policies match your current filters."
           (clearFilters)="onClearFilters()"

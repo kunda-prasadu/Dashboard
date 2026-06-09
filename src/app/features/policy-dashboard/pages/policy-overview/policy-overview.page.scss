@@ -9,8 +9,20 @@
   gap: var(--ph-space-5);
 }
 
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .page-title {
   font: var(--ph-font-display);
   color: var(--ph-on-surface);
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
   margin: 0;
 }

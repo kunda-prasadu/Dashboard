@@ -5,6 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 
 import { PolicyFilterComponent } from './policy-filter.component';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { PolicyStore } from '../../store/policy.store';
 import { StorageService } from '../../../../core/services/storage.service';
 import { PolicyFilter } from '../../models/policy-filter.model';
@@ -30,15 +31,17 @@ describe('PolicyFilterComponent', () => {
   let component: PolicyFilterComponent;
   let storeSpy: ReturnType<typeof makeStoreSpy>;
   let storageSpy: ReturnType<typeof makeStorageSpy>;
+  let sheetSpy: jasmine.SpyObj<MatBottomSheet>;
 
   async function setup(
     queryParams: Record<string, string> = {},
     stored: PolicyFilter | null = null
   ) {
-    storeSpy   = makeStoreSpy();
+    storeSpy  = makeStoreSpy();
     storageSpy = makeStorageSpy(stored);
+    sheetSpy  = jasmine.createSpyObj('MatBottomSheet', ['open']);
 
-    await TestBed.configureTestingModule({
+    TestBed.configureTestingModule({
       imports: [PolicyFilterComponent, NoopAnimationsModule],
       providers: [
         provideZonelessChangeDetection(),
@@ -50,7 +53,9 @@ describe('PolicyFilterComponent', () => {
           useValue: { snapshot: { queryParams } }
         }
       ]
-    }).compileComponents();
+    });
+    TestBed.overrideProvider(MatBottomSheet, { useValue: sheetSpy });
+    await TestBed.compileComponents();
 
     fixture   = TestBed.createComponent(PolicyFilterComponent);
     component = fixture.componentInstance;
@@ -203,6 +208,19 @@ describe('PolicyFilterComponent', () => {
       expect(component.form.get('effectiveDateTo')?.value).toEqual(new Date('2025-06-30'));
       expect(component.form.get('expiryDateFrom')?.value).toEqual(new Date('2025-07-01'));
       expect(component.form.get('expiryDateTo')?.value).toEqual(new Date('2026-06-30'));
+    });
+  });
+
+  describe('openFilters()', () => {
+    it('opens the filter bottom sheet with form and option arrays', async () => {
+      await setup();
+      component.openFilters();
+      expect(sheetSpy.open).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        jasmine.objectContaining({
+          data: jasmine.objectContaining({ form: component.form })
+        })
+      );
     });
   });
 
