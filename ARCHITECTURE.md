@@ -1,8 +1,61 @@
 # Architecture
 
 ## Overview
+
 **Chubb APAC Policy Overview Dashboard** — Angular 20, standalone + zoneless + signals.
-Provides real-time visibility into the APAC policy portfolio with server-side filtering, sorting, and pagination.
+
+Real-time visibility into the APAC policy portfolio. All filtering, sorting, and pagination is server-side; the browser holds one page of data at a time. A custom Express mock API serves 250 realistic APAC records with OR-search, multi-filter, and aggregate summary endpoints.
+
+---
+
+## Application Layer Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Browser / SSR                        │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                   AppComponent                       │   │
+│  │  Toolbar  ·  ThemePickerComponent  ·  skip-link      │   │
+│  │                  router-outlet                        │   │
+│  └──────────────────────┬──────────────────────────────┘   │
+│                          │ lazy loadComponent                │
+│  ┌───────────────────────▼───────────────────────────────┐  │
+│  │               PolicyOverviewPage  (/policies)         │  │
+│  │                                                       │  │
+│  │  PolicyFilterComponent  ──────────────────────────┐  │  │
+│  │  SummaryPanelComponent   ──────────────────────────┤  │  │
+│  │  BulkActionBarComponent  (conditional)  ───────────┤  │  │
+│  │                                                    ▼  │  │
+│  │  @defer (on idle) ─── PolicyTableComponent        │  │  │
+│  │                                                    │  │  │
+│  │  PolicyDetailDialog  (on rowClick)  ───────────────┘  │  │
+│  └────────────────────────┬──────────────────────────────┘  │
+│                            │ inject                          │
+│  ┌─────────────────────────▼──────────────────────────────┐ │
+│  │                    PolicyStore                          │ │
+│  │  signal<Policy[]>   signal<number>   signal<Summary>   │ │
+│  │  signal<Filter>     signal<Sort>     signal<PageReq>   │ │
+│  │  signal<Set<id>>    signal<string|null>  (error)        │ │
+│  │                           │ inject                      │ │
+│  │              PolicyApiService  ◄───────────────────────┘ │
+│  │                           │                              │
+│  └───────────────────────────┼──────────────────────────────┘
+│                              │ HttpClient
+├──────────────────────────────┼──────────────────────────────┤
+│           Express Mock API   │  :3000                        │
+│  ┌───────────────────────────▼───────────────────────────┐  │
+│  │  GET /policies       ← filter + sort + paginate       │  │
+│  │  GET /policies/summary ← filter + aggregate           │  │
+│  │  GET /policies/:id                                    │  │
+│  │  PATCH /policies/:id  ← in-memory update              │  │
+│  │                                                       │  │
+│  │  applyFilters() ─ OR search, multi-status, date range │  │
+│  │  applySort()                                          │  │
+│  │  db.json ← 250 APAC records (gitignored)              │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -10,201 +63,262 @@ Provides real-time visibility into the APAC policy portfolio with server-side fi
 
 ```
 src/app/
+├── app.config.ts                  # Bootstrap — providers, router, HTTP, SSR
+├── app.routes.ts                  # Lazy-loaded /policies route
+├── app.ts                         # Root component — toolbar + skip-link + router-outlet
+│
 ├── core/
 │   ├── services/
-│   │   └── logger.service.ts          # Dev-only console wrapper, [PolicyHub] prefix, SSR-safe
+│   │   ├── logger.service.ts      # Dev-only console wrapper, [PolicyHub] prefix, SSR-safe
+│   │   ├── storage.service.ts     # Sole localStorage gateway — SSR-safe, quota-safe
+│   │   └── theme.service.ts       # isDark signal + effect → html.dark-theme DOM class
 │   └── interceptors/
-│       └── error.interceptor.ts       # Functional interceptor → NormalisedHttpError per HTTP status
-├── shared/                            # Reusable presentational components and pipes (Phase 3+)
+│       └── error.interceptor.ts   # HttpInterceptorFn → NormalisedHttpError
+│
+├── shared/
+│   ├── loading-skeleton/          # Skeleton: filter bar + 4 cards + 8 table rows
+│   ├── empty-state/               # role="status", clearFilters output
+│   ├── error-state/               # role="alert", retry output
+│   └── theme-picker/              # role="switch" toggle — light ↔ dark
+│
 └── features/
     └── policy-dashboard/
         ├── models/
-        │   ├── policy.model.ts        # Policy interface + string union types (no enums)
-        │   ├── policy-filter.model.ts # PolicyFilter — all filter surface area
-        │   ├── pagination.model.ts    # PageRequest, PolicyPage<T>
-        │   └── policy-summary.model.ts# PolicySummaryData + EMPTY_SUMMARY sentinel
+        │   ├── policy.model.ts         # Policy + string union types (no enums)
+        │   ├── policy-filter.model.ts  # PolicyFilter — full filter surface area
+        │   ├── pagination.model.ts     # PageRequest, PolicyPage<T>
+        │   └── policy-summary.model.ts # PolicySummaryData + EMPTY_SUMMARY
         ├── constants/
-        │   └── policy.constants.ts    # POLICY_STATUSES, REGIONS, LOBs, CURRENCIES, PAGE_SIZE_OPTIONS, STORAGE_KEYS
+        │   └── policy.constants.ts     # POLICY_STATUSES, REGIONS, LOBS, CURRENCIES,
+        │                               # PAGE_SIZE_OPTIONS, STORAGE_KEYS
         ├── services/
-        │   └── policy-api.service.ts  # Stateless HTTP service — getAll/getSummary/patch/flagPolicies
+        │   └── policy-api.service.ts   # Stateless HTTP — getAll/getSummary/patch/flagPolicies
         ├── store/
-        │   └── policy.store.ts        # Signal store — single source of truth, optimistic updates
+        │   └── policy.store.ts         # Signal store — SSoT, optimistic updates, forkJoin
         ├── components/
-        │   ├── policy-table/
-        │   │   ├── policy-table.component.ts   # Presentational table — reads store signals, emits rowClick
-        │   │   ├── policy-table.component.html # mat-table: 9 columns, sticky header/actions, empty state
-        │   │   └── policy-table.component.scss # Status/LOB badges, compact layout, Material tokens
-        │   ├── policy-filter/
-        │   │   ├── policy-filter.component.ts   # Reactive filter bar — dual valueChanges subs, URL+storage sync
-        │   │   ├── policy-filter.component.html # Search, multi-selects, date pickers, active-filter chips
-        │   │   └── policy-filter.component.scss # Responsive grid layout, chip row
-        │   ├── summary-panel/
-        │   │   ├── summary-panel.component.ts   # KPI panel — computed signals from store.summary()
-        │   │   ├── summary-panel.component.html # 4 status cards, GWP bars, SVG expiry arc
-        │   │   └── summary-panel.component.scss # Card colors, bar chart, arc animation (reduced-motion aware)
-        │   └── bulk-action-bar/
-        │       ├── bulk-action-bar.component.ts   # Contextual toolbar — flag-for-review, retry, clear selection
-        │       ├── bulk-action-bar.component.html # Count badge, flag button, clear button
-        │       └── bulk-action-bar.component.scss # Slide-in animation, primary-container palette
+        │   ├── policy-table/           # Presentational: reads store signals, emits rowClick
+        │   ├── policy-filter/          # Reactive form: dual subs, URL + storage sync, chips
+        │   ├── summary-panel/          # KPI: status cards, GWP bars, SVG arc
+        │   ├── bulk-action-bar/        # Flag batch + retry, snackbar feedback
+        │   └── policy-detail-dialog/   # Focus-trapped detail view via MatDialog
         └── pages/
-            └── policy-overview/
-                └── policy-overview.page.ts     # Routed shell — composes filter + table, bootstraps loadPolicies()
+            └── policy-overview/        # Routed shell — state machine, @defer table
 
 mock-api/
-├── generate-data.js                   # Generates 250 APAC records with realistic distribution → db.json
-└── server.js                          # Express ESM — server-side filter/sort/paginate/summarise
+├── generate-data.js   # Generates 250 APAC records → db.json
+└── server.js          # Express ESM — filter / sort / paginate / summarise / PATCH
 ```
 
 ---
 
-## Layers & Responsibilities
+## `PolicyStore` Signal Map
 
-### `core/services/StorageService`
-- **Single point of contact** for `localStorage` in the entire app — all other code goes through this service
-- SSR-safe (`isPlatformBrowser`), try/catch around every call (quota, security errors)
-- Generic `get<T>` / `set` / `remove` — JSON serialise/deserialise transparently
-- **Why**: Centralised abstraction; swap backing store without touching callers; prevents SSR crashes
+```
+┌────────────────────────────────────────────────────────────┐
+│                      PolicyStore                           │
+│                                                            │
+│  Private signals (write)          Public readonly signals  │
+│  ─────────────────────────        ───────────────────────  │
+│  _policies: signal<Policy[]>   → policies()               │
+│  _total:    signal<number>     → total()                  │
+│  _summary:  signal<Summary>    → summary()                │
+│  _filters:  signal<Filter>     → filters()                │
+│  _sort:     signal<Sort>       → sort()                   │
+│  _pagination: signal<Page>     → pagination()             │
+│  _loading:  signal<boolean>    → loading()                │
+│  _error:    signal<string|null>→ error()                  │
+│  _selectedIds: signal<Set>     → selectedIds()            │
+│  _lastFailedFlagIds: signal[]  → lastFailedFlagIds()      │
+│                                                            │
+│  Computed signals                                          │
+│  ──────────────                                            │
+│  selectedCount = computed(() => _selectedIds().size)      │
+│  hasSelection  = computed(() => selectedCount() > 0)      │
+│                                                            │
+│  Public methods                                            │
+│  ──────────────                                            │
+│  loadPolicies()          forkJoin(page + summary)         │
+│  updateFilters(f)        reset page → loadPolicies()      │
+│  updateSort(f, o)        reset page → loadPolicies()      │
+│  setPage(i, size)        persist page size → loadPolicies │
+│  clearFilters()          reset filters + page             │
+│  toggleSelection(id)     add/remove from Set              │
+│  selectAll()             add all current page ids         │
+│  clearSelection()        clear Set                        │
+│  flagSelectedPolicies()  optimistic + HTTP + rollback     │
+│  retryLastFailedFlag()   restore failed ids + retry       │
+│  renewPolicy(id)         optimistic status + HTTP + rollback│
+└────────────────────────────────────────────────────────────┘
+```
 
-### `core/services/ThemeService`
-- `isDark = signal<boolean>(...)` — single source of truth for the active theme
-- `toggle()` / `setDark(bool)` — mutate the signal + persist via `StorageService`
-- Angular `effect()` mirrors `isDark` onto `document.documentElement.classList` (`dark-theme` class)
+---
+
+## HTTP / Data Flow
+
+### Normal load (filter or page change)
+
+```
+User changes filter or page
+       │
+       ▼
+PolicyFilterComponent / PolicyTableComponent
+       │ store.updateFilters(f) / store.setPage(i, size)
+       ▼
+PolicyStore
+  _filters.set(f) + _pagination.update(reset to 0)
+  _loading.set(true)
+  _error.set(null)
+       │
+       ▼
+  forkJoin({
+    page:    PolicyApiService.getAll(filters, sort, page),
+    summary: PolicyApiService.getSummary(filters)
+  })
+       │ parallel HTTP (both fire simultaneously)
+       ├──► GET /policies?search=...&status[]=...&sort=...&page=...&pageSize=...
+       └──► GET /policies/summary?search=...&status[]=...
+                    │
+                    ▼ Express mock server
+              applyFilters() → applySort() → slice(start, end)
+                    │
+                    ▼
+  { data: Policy[], total: number }    { active, pending, ... }
+       │
+       ▼
+PolicyStore
+  _policies.set(data)
+  _total.set(total)
+  _summary.set(summary)
+  _loading.set(false)
+       │
+       ▼
+All components reading these signals re-render automatically
+(Angular OnPush + zoneless — no manual detectChanges)
+```
+
+### Bulk flag flow (optimistic update + rollback)
+
+```
+User selects rows → clicks "Flag for Review"
+       │
+       ▼
+BulkActionBarComponent.flagForReview()
+  count = store.selectedCount()        ← guard: no-op if 0
+  store.flagSelectedPolicies()
+    │
+    ▼ PolicyStore.flagSelectedPolicies()
+    snapshot = [..._policies()]
+    _policies.update(optimistic flag set)   ← instant UI
+    _selectedIds.set(new Set())
+    api.flagPolicies(ids)               ← forkJoin of PATCHes
+    │
+    ├── SUCCESS → tap(confirmedPolicies => merge into _policies)
+    │                component shows "N policies flagged" snackbar
+    └── ERROR  → catchError → rollback snapshot + set error
+                              set _lastFailedFlagIds
+                              throwError (re-emits to subscriber)
+                              component shows "Failed" snackbar + Retry
+
+User clicks Retry
+  store.retryLastFailedFlag()
+  → _selectedIds.set(new Set(lastFailedIds))
+  → flagSelectedPolicies() (same flow as above)
+```
+
+---
+
+## Component Hierarchy
+
+```
+AppComponent
+├── <a class="skip-link">           ← WCAG 2.4.1 skip-nav
+├── <mat-toolbar>
+│   ├── app-title                   ← role="banner"
+│   └── ThemePickerComponent        ← role="switch"
+└── <router-outlet>
+    └── PolicyOverviewPage  (lazy, /policies)
+        ├── <main id="main-content">
+        │   ├── PolicyFilterComponent
+        │   │   ├── <mat-form-field> search
+        │   │   ├── <mat-select> status (multi)
+        │   │   ├── <mat-select> region (multi)
+        │   │   ├── <mat-select> LOB (multi)
+        │   │   ├── <mat-select> currency (multi)
+        │   │   ├── <mat-datepicker> effective date range
+        │   │   ├── <mat-datepicker> expiry date range
+        │   │   ├── <mat-input> premium min / max
+        │   │   └── active-filter chip row
+        │   │
+        │   ├── @if (loading && !policies.length)
+        │   │   └── LoadingSkeletonComponent   ← role="status" aria-busy
+        │   │
+        │   ├── @else if (error)
+        │   │   └── ErrorStateComponent        ← role="alert"
+        │   │
+        │   └── @else
+        │       ├── SummaryPanelComponent
+        │       │   ├── 4× status cards (color + icon + text)
+        │       │   ├── GWP-by-LOB bar chart
+        │       │   └── SVG expiry arc (stroke-dashoffset)
+        │       │
+        │       ├── @if (hasSelection)
+        │       │   └── BulkActionBarComponent
+        │       │       ├── selection count badge (aria-live)
+        │       │       ├── Flag for Review button
+        │       │       └── Clear Selection button
+        │       │
+        │       └── @defer (on idle)
+        │           ├── @placeholder → LoadingSkeletonComponent
+        │           ├── @loading (min 200ms) → LoadingSkeletonComponent
+        │           └── @if (total === 0)
+        │               │   EmptyStateComponent  ← role="status"
+        │               └── PolicyTableComponent
+        │                   ├── <mat-checkbox> select all (indeterminate)
+        │                   ├── <mat-sort-header> columns
+        │                   ├── <tr mat-row> × N (row checkboxes, action buttons)
+        │                   ├── *matNoDataRow empty state
+        │                   └── <mat-paginator>
+        │
+        └── PolicyDetailDialogComponent  (MatDialog overlay)
+            ├── Policy fields display
+            ├── Status badge (color + text)
+            └── Close button (cdkFocusInitial, restoreFocus: true)
+```
+
+---
+
+## Core Services
+
+### `StorageService`
+- **Single point of contact** for `localStorage` — enforced by grep rule
+- SSR-safe: `isPlatformBrowser(PLATFORM_ID)` check before every access
+- try/catch around every call (quota exceeded, private browsing security errors)
+- Generic `get<T>()` / `set()` / `remove()` — JSON serialise/deserialise transparently
+
+### `ThemeService`
+- `isDark = signal<boolean>` — single source of truth for active theme
+- `toggle()` / `setDark(bool)` — mutate signal + persist via `StorageService`
+- `effect()` mirrors `isDark` onto `document.documentElement.classList` (`dark-theme` class)
 - Init priority: stored value → `prefers-color-scheme` → light
-- SSR-safe: skips `matchMedia` and DOM access when not in a browser
-- **Why signal + effect**: Unidirectional — signal changes propagate to DOM through the effect; no manual DOM imperative calls outside the effect
+- SSR-safe: `isBrowser` guard inside the effect
 
-### `shared/loading-skeleton/LoadingSkeletonComponent`
-- Spatially accurate animated placeholder: filter bar strip, 4 status card bones, 8 table row bones
-- `role="status"` + `aria-live="polite"` + `aria-busy="true"` — screen readers announce loading
-- CSS shimmer via `background-image` gradient + `@keyframes`; `prefers-reduced-motion` disables animation
-- **Why skeleton (not spinner)**: fills space with recognisable shapes so the eye lands in the right place
-
-### `shared/empty-state/EmptyStateComponent`
-- Store-agnostic: receives `message` input, emits `clearFilters` output
-- `role="status"` + `aria-live="polite"` — announced when filters return zero results
-- **Why store-agnostic**: reusable in any list view; parent decides what "clear" means
-
-### `shared/error-state/ErrorStateComponent`
-- Store-agnostic: receives `message` input, emits `retry` output
-- `role="alert"` + `aria-live="assertive"` — interrupts screen reader immediately (errors are urgent)
-- **Why `role="alert"` not `role="status"`**: errors require immediate attention; polite announcement would be missed
-
-### `shared/theme-picker/ThemePickerComponent`
-- `mat-icon-button` with `role="switch"` + `aria-checked` + dynamic `aria-label`
-- Icon flips between `dark_mode` / `light_mode` based on `theme.isDark()`
-- Calls `theme.toggle()` on click
-- **Why standalone shared**: reusable across any shell without import duplication
-
-### `core/services/LoggerService`
-- Wraps `console.*` methods with a `[PolicyHub]` prefix
+### `LoggerService`
+- Wraps `console.log/warn/error` with `[PolicyHub]` prefix
 - Suppresses `debug` and `info` in production (`isDevMode()`)
-- SSR-safe: checks `isPlatformBrowser` before writing to console
-- **Why**: Centralised log control — easy to swap to a remote logger later without touching call sites
+- SSR-safe: checks `isPlatformBrowser`
 
-### `core/interceptors/errorInterceptor`
-- Functional interceptor registered via `withInterceptors([errorInterceptor])`
+### `errorInterceptor` (functional)
+- Registered via `withInterceptors([errorInterceptor])` in `app.config.ts`
 - Maps `HttpErrorResponse` → `NormalisedHttpError { status, message, originalError }`
-- User-friendly messages per status code (0, 401, 403, 404, 4xx, 5xx) — never exposes internal server details
-- **Why**: Components only handle a typed `NormalisedHttpError`, never raw HTTP errors. Keeps error-handling logic in one place.
-
-### `features/policy-dashboard/services/PolicyApiService`
-- Stateless — no signals, no subjects. Pure HTTP → Observable.
-- `buildFilterParams()` is private and shared by `getAll()` and `getSummary()` — single source of param-building truth
-- `flagPolicies(ids[])` uses `forkJoin` to fire one `PATCH` per id in parallel
-- **Why**: Separation of concerns. The store orchestrates state; the service knows only the HTTP contract.
-
-### `core/services/StorageService`
-- SSR-safe wrapper around `localStorage` — checks `isPlatformBrowser` before accessing `window`
-- Catches storage errors silently (private browsing, quota exceeded)
-- **Why**: Centralised storage abstraction — swap backing store without touching callers; prevents SSR crashes
-
-### `features/policy-dashboard/components/SummaryPanelComponent`
-- **Reads `store.summary()` only** — a server-computed aggregate over the current filtered set; always consistent with the table
-- **4 status cards** — each clickable, emits `statusClick(PolicyStatus)` for drilldown; color + icon + text (never color alone)
-- **GWP by LOB bar chart** — `lobEntries()` computed signal sorts by amount desc, normalises widths to the largest bar
-- **SVG expiry arc** — `expiryFraction()` computed signal drives `stroke-dashoffset`; `prefers-reduced-motion` disables the CSS transition
-- Emits `expiryClick()` for drilldown to active-expiring policies
-- **Why server-computed**: Aggregating over one page of table data would give wrong totals. The server applies the same filters to all 250 records.
-- **Why SVG arc**: Animatable without JavaScript, works on any background, respects system motion preferences via a single CSS media query
-
-### `features/policy-dashboard/components/BulkActionBarComponent`
-- **Visible only when `store.hasSelection()`** — rendered by `PolicyOverviewPage` via `@if`
-- **`flagForReview()`**: captures count → calls `store.flagSelectedPolicies()` → subscribes → shows plural-aware success snackbar or failure snackbar with a **Retry** action
-- **Retry**: calls `store.retryLastFailedFlag()` (restores the failed IDs as selection, re-attempts the PATCH batch)
-- Optimistic update + rollback lives in the **store**; snackbar lives in the **component** — one Observable, two concerns
-- `aria-live="polite"` on the selection count; `role="toolbar"` on the container; descriptive `aria-label` on each button
-- Slide-in CSS animation; `prefers-reduced-motion` disables it
-- **Why separate component**: keeps snackbar + retry logic out of `PolicyOverviewPage`; independently testable with a plain store stub
-
-### `features/policy-dashboard/components/PolicyFilterComponent`
-- **Reactive form** with two `valueChanges` subscriptions:
-  1. **Immediate** → updates `_snapshot` signal for instant chip UI feedback
-  2. **`debounceTime(400)` + `distinctUntilChanged`** → calls `store.updateFilters()`, persists to `StorageService`, syncs URL
-- **URL sync**: `router.navigate([], { queryParamsHandling: 'merge', replaceUrl: true })` — filters are bookmarkable/shareable
-- **Seed priority on init**: URL query params → localStorage → defaults (URL wins so shared links restore the sender's view)
-- Active-filter chips with individual `remove` and a "clear all" action
-- Accessibility: `role="search"`, `aria-label` on every control and chip button, `aria-live` on filter count
-- **Why two subscriptions**: Chips must update on every keystroke; API calls must be debounced. Splitting avoids async chip lag.
-
-### `features/policy-dashboard/components/PolicyTableComponent`
-- **Standalone, `ChangeDetectionStrategy.OnPush`** — only re-renders when signal values change
-- Presentational: reads `PolicyStore` signals; never calls the API directly
-- `[dataSource]="store.policies()"` — renders the current page only (no `MatTableDataSource`)
-- `[trackBy]="trackById"` on `<table mat-table>` — avoids full DOM tear-down on page change
-- **Controlled paginator**: `[length]`, `[pageIndex]`, `[pageSize]` all bound to store signals; `(page)` → `store.setPage()`
-- **Server-side sort**: `(matSortChange)` → `store.updateSort()`; sort state reflected back via `[matSortActive/Direction]`
-- Selection: `allSelected` / `someSelected` are `computed()` signals — header checkbox indeterminate state is derived, not stored
-- Accessibility: `role="region"` + `aria-label` on container; `aria-label` on every checkbox and icon button; `<th scope="col">`; `*matNoDataRow` empty state
-- **Why presentational**: Keeps the component testable without HTTP or real store setup (stub the store signals)
-
-### `features/policy-dashboard/pages/PolicyOverviewPage`
-- Lazy-loaded at `/policies` route via `loadComponent`
-- Calls `store.loadPolicies()` in `ngOnInit` — one authoritative trigger per navigation
-- State machine: `store.loading()` → skeleton | `store.error()` → error-state + retry | `store.total()===0` → empty-state | default → live dashboard
-- `@defer (on idle)` around the table section — filter + summary paint first; table defers until browser idle
-- `rowClick` → opens `PolicyDetailDialogComponent` via `MatDialog` (focus trap, ESC, `restoreFocus: true`)
-- `<main id="main-content">` — skip-link target; `aria-label` on landmark
-- **Why a page shell**: keeps routing concerns (title, guards) at page level; child components stay route-agnostic
-
-### `features/policy-dashboard/store/PolicyStore`
-- `providedIn: 'root'` — one instance for the feature lifetime
-- **Private** `signal<T>()` for all state; **public** `.asReadonly()` exposures only
-- `computed()` for `selectedCount` and `hasSelection` — no derived state stored redundantly
-- `loadPolicies()` uses `forkJoin({ page, summary })` — both requests fire in parallel
-- `takeUntilDestroyed(destroyRef)` on every subscription — no manual unsubscribe, no leaks
-- Optimistic updates: snapshot → update signal → HTTP → rollback on error (flag + renew)
-- **Why signals over NgRx**: single feature, ~¼ the boilerplate, native, zero extra dependencies
-
----
-
-## State Management Design
-
-```
-UI component
-  ↓ calls store.updateFilters(filters)
-PolicyStore
-  ↓ sets _filters signal, resets page to 0
-  ↓ calls loadPolicies()
-PolicyApiService
-  ↓ builds HttpParams from filters + sort + page
-  ↓ GET /policies + GET /policies/summary (parallel via forkJoin)
-Express mock server
-  ↓ applies filter/sort/paginate server-side
-  ↓ returns { data: Policy[], total: number }
-PolicyStore
-  ↓ sets _policies, _total, _summary signals
-UI component
-  ↑ reacts automatically via signal reads in template
-```
-
-No client-side filtering, sorting, or pagination. The browser holds exactly one page of data at a time.
+- User-friendly messages per status code: `0` → network error, `401` → unauthorised, `403` → forbidden, `404` → not found, `4xx` → bad request, `5xx` → server error
 
 ---
 
 ## Change Detection
 
-`provideZonelessChangeDetection()` in `app.config.ts`. Zone.js is **not** in the app build polyfills.  
-Zone.js **is** in test polyfills — Karma's runner requires it; Angular CD inside tests uses `provideZonelessChangeDetection()`.
+`provideZonelessChangeDetection()` in `app.config.ts`. Zone.js is **not** in the app build polyfills.
+
+Zone.js **is** in test polyfills — Karma's runner requires it. Angular CD inside tests uses `provideZonelessChangeDetection()` in every `TestBed`.
 
 All components use `ChangeDetectionStrategy.OnPush`. In a zoneless app this means Angular only checks a component when a signal it reads has changed — no zone triggers, no unnecessary traversals.
 
@@ -212,45 +326,32 @@ All components use `ChangeDetectionStrategy.OnPush`. In a zoneless app this mean
 
 ## HTTP Configuration
 
-`provideHttpClient(withFetch(), withInterceptors([errorInterceptor]))` in `app.config.ts`.
-- `withFetch()` — uses the native Fetch API instead of XHR; compatible with zoneless
-- `withInterceptors([errorInterceptor])` — functional interceptor chain
+```typescript
+provideHttpClient(
+  withFetch(),                          // Fetch API instead of XHR — zoneless compatible
+  withInterceptors([errorInterceptor])  // Functional interceptor chain
+)
+```
 
 ---
 
-## Mock API
-
-Custom Express ESM server (`mock-api/server.js`). Chosen over `json-server` because:
-- `json-server` ANDs `_like` params — cannot OR-search across `policyNumber`, `policyHolderName`, `underwriter`
-- `json-server` has no aggregation/summary endpoint
-- Express gives full control over filter logic and response shape
-
-`db.json` is gitignored. Regenerate with `npm run generate:mock`.
-
----
-
-## Testing
-
-**Framework:** Jasmine + Karma with Angular testing utilities.
-
-**Coverage tooling:** Istanbul (via `ng test --code-coverage`). HTML reports are written to `coverage/`.
-
-**Strategy per layer:**
+## Testing Strategy
 
 | Layer | Approach |
 |---|---|
-| Services (API, Storage, Theme, Logger) | `HttpTestingController` for HTTP; stub dependencies via `useValue`; all error paths exercised |
-| Store (`PolicyStore`) | Spy on `PolicyApiService`; assert signal values after each mutating call; optimistic-update + rollback paths covered |
-| Components | Minimal store stub (plain functions/signals, no injection-context constraints); `MatSnackBar` spied via `fixture.debugElement.injector.get` to bypass standalone-component scoping |
-| Interceptor | `HttpTestingController`; exercises 4xx, 5xx, and network-error branches |
+| `PolicyApiService` | `HttpTestingController` — asserts exact URL, params, method, and response mapping |
+| `PolicyStore` | Spy on `PolicyApiService`; assert signal values after each mutating call; optimistic + rollback paths |
+| `PolicyFilterComponent` | Stub store + storage; test form→store mapping, URL seeding, chip removal, debounce |
+| `PolicyTableComponent` | Stub store signals; test sort/page/select delegation, `formatPremium` branches |
+| `BulkActionBarComponent` | Stub store; `spyOn` `MatSnackBar` via `fixture.debugElement.injector.get()` |
+| `ThemeService` | Stub `StorageService`; assert `isDark` signal and `StorageService.set` calls |
+| `errorInterceptor` | `HttpTestingController`; exercise 4xx, 5xx, and network-error branches |
 
-**Zoneless note:** Every `TestBed` provides `provideZonelessChangeDetection()`. Zone.js is present in test polyfills only (Karma requires it), not in the app build.
-
-**Phase 9 coverage baseline (107 tests):**
+**Phase 9 coverage baseline — 107 tests:**
 
 | Metric | Coverage |
 |---|---|
 | Statements | 94.88% |
-| Branches | **86.46%** |
+| **Branches** | **86.46%** |
 | Functions | 92.30% |
 | Lines | 96.80% |
