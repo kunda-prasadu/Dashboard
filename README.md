@@ -13,7 +13,7 @@ A production-quality insurance policy management dashboard built with **Angular 
 | State | Custom signal store (`PolicyStore`) — no NgRx |
 | HTTP | `HttpClient` with functional interceptors (`withFetch`) |
 | Mock API | Custom Express ESM server (server-side filter/sort/paginate) |
-| Tests | Jasmine + Karma (66 specs, all green) |
+| Tests | Jasmine + Karma (85 specs, all green) |
 | Styles | SCSS + Material Design tokens |
 
 ---
@@ -92,6 +92,8 @@ mock-api/
 - **Server-side filtering**: All filter/sort/paginate logic lives in the Express server. The browser holds one page of data at a time.
 - **String unions over enums**: `type PolicyStatus = 'Active' | 'Expired' | ...` — tree-shakeable, no runtime overhead.
 - **Functional HTTP interceptors**: Stateless, composable, testable without class instantiation.
+- **CSS custom property tokens**: Light/dark theme via a single `html.dark-theme` class toggle — no rebuild, no JS loop.
+- **StorageService as sole localStorage gateway**: SSR-safe, quota-safe; enforced by grep.
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md), [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md), and [TRADE_OFFS.md](./TRADE_OFFS.md) for full detail.
 

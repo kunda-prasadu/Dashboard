@@ -59,6 +59,26 @@ mock-api/
 
 ## Layers & Responsibilities
 
+### `core/services/StorageService`
+- **Single point of contact** for `localStorage` in the entire app — all other code goes through this service
+- SSR-safe (`isPlatformBrowser`), try/catch around every call (quota, security errors)
+- Generic `get<T>` / `set` / `remove` — JSON serialise/deserialise transparently
+- **Why**: Centralised abstraction; swap backing store without touching callers; prevents SSR crashes
+
+### `core/services/ThemeService`
+- `isDark = signal<boolean>(...)` — single source of truth for the active theme
+- `toggle()` / `setDark(bool)` — mutate the signal + persist via `StorageService`
+- Angular `effect()` mirrors `isDark` onto `document.documentElement.classList` (`dark-theme` class)
+- Init priority: stored value → `prefers-color-scheme` → light
+- SSR-safe: skips `matchMedia` and DOM access when not in a browser
+- **Why signal + effect**: Unidirectional — signal changes propagate to DOM through the effect; no manual DOM imperative calls outside the effect
+
+### `shared/theme-picker/ThemePickerComponent`
+- `mat-icon-button` with `role="switch"` + `aria-checked` + dynamic `aria-label`
+- Icon flips between `dark_mode` / `light_mode` based on `theme.isDark()`
+- Calls `theme.toggle()` on click
+- **Why standalone shared**: reusable across any shell without import duplication
+
 ### `core/services/LoggerService`
 - Wraps `console.*` methods with a `[PolicyHub]` prefix
 - Suppresses `debug` and `info` in production (`isDevMode()`)

@@ -116,6 +116,22 @@ Honest accounting of what we gave up for each architectural choice.
 
 ---
 
+## CSS Custom Properties for Theming (vs. Sass Variables or Two Stylesheets)
+
+**Gain:** Runtime theme switch without a rebuild; one `<html>` class toggle re-scopes every token.  
+**Cost:** Custom properties are inherited by all elements — a typo in a token name silently falls back to the browser default (no compile-time error).  
+**Mitigation:** Token names follow a strict `--ph-` prefix convention. TypeScript/Sass don't check CSS variable names, but a visual regression test (or Storybook snapshot) would catch unexpected fallbacks.
+
+---
+
+## `effect()` for DOM Class Mutation
+
+**Gain:** Declarative, reactive — `isDark` signal drives the DOM automatically; `setDark()` stays pure.  
+**Cost:** Effects run asynchronously in some contexts. If a test checks the DOM class immediately after `setDark()` without a `fixture.detectChanges()`, the assertion may fail.  
+**Mitigation:** Tests assert on signal values and `StorageService.set` calls — not on the DOM class directly. The class toggle is a UI concern validated manually or by E2E tests.
+
+---
+
 ## Observable Return from `flagSelectedPolicies()`
 
 **Gain:** Clean separation — store owns state, component owns UI feedback. No second channel (Subject, effect, BehaviorSubject) needed.  

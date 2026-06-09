@@ -13,6 +13,7 @@ import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, Observable, tap, throwError } from 'rxjs';
 import { PolicyApiService } from '../services/policy-api.service';
+import { StorageService } from '../../../core/services/storage.service';
 import { Policy } from '../models/policy.model';
 import { PolicyFilter } from '../models/policy-filter.model';
 import { PageRequest } from '../models/pagination.model';
@@ -22,26 +23,23 @@ import { STORAGE_KEYS, PAGE_SIZE_OPTIONS } from '../constants/policy.constants';
 
 type SortState = { field: string; order: 'asc' | 'desc' };
 
-function storedPageSize(): number {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.PAGE_SIZE);
-    const parsed = raw ? parseInt(raw, 10) : NaN;
-    return PAGE_SIZE_OPTIONS.includes(parsed) ? parsed : 25;
-  } catch {
-    return 25;
-  }
-}
-
 @Injectable({ providedIn: 'root' })
 export class PolicyStore {
   private readonly api        = inject(PolicyApiService);
+  private readonly storage    = inject(StorageService);
   private readonly destroyRef = inject(DestroyRef);
 
   // ── Private state signals ────────────────────────────────────────────────
   private readonly _policies          = signal<Policy[]>([]);
   private readonly _total             = signal<number>(0);
   private readonly _summary           = signal<PolicySummaryData>(EMPTY_SUMMARY);
-  private readonly _pagination        = signal<PageRequest>({ pageIndex: 0, pageSize: storedPageSize() });
+  private readonly _pagination        = signal<PageRequest>({
+    pageIndex: 0,
+    pageSize: (() => {
+      const n = this.storage.get<number>(STORAGE_KEYS.PAGE_SIZE);
+      return n && PAGE_SIZE_OPTIONS.includes(n) ? n : 25;
+    })()
+  });
   private readonly _loading           = signal<boolean>(false);
   private readonly _error             = signal<string | null>(null);
   private readonly _filters           = signal<PolicyFilter>({});
@@ -110,7 +108,7 @@ export class PolicyStore {
   }
 
   setPage(pageIndex: number, pageSize: number): void {
-    try { localStorage.setItem(STORAGE_KEYS.PAGE_SIZE, String(pageSize)); } catch { /* SSR */ }
+    this.storage.set(STORAGE_KEYS.PAGE_SIZE, pageSize);
     this._pagination.set({ pageIndex, pageSize });
     this.loadPolicies();
   }
