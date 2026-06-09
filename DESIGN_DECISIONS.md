@@ -78,6 +78,34 @@ Each decision records **what** was chosen, **why**, and what was **rejected**.
 
 ---
 
+## 19. Server-Computed Summary (Never Client Aggregation)
+
+**Chosen:** `SummaryPanelComponent` reads `store.summary()` — returned by `GET /policies/summary` which applies the same filters as `/policies` over all 250 records.
+**Rejected:** Aggregating the current page of 25 records client-side.
+**Why:** A page holds at most 25 records. Summing `premiumAmount` over 25 records when 200 match the filter would give wildly wrong totals. The server has the full filtered dataset; the client has one page.
+
+---
+
+## 20. SVG Arc for Expiry Indicator
+
+**Chosen:** SVG `<circle>` with `stroke-dashoffset` driven by a `computed()` signal.
+**Rejected:** CSS `conic-gradient` or a canvas-based chart.
+**Why:**
+- `stroke-dashoffset` is directly animatable via CSS `transition` — no JS animation loop.
+- `prefers-reduced-motion` disables the transition at the CSS level; no JS media-query check needed.
+- Works on any background color and scales cleanly with `viewBox`.
+- Pure SVG — no third-party chart library added to the bundle.
+
+---
+
+## 21. Color Is Never the Sole Signal on Status Cards
+
+**Chosen:** Each status card has a background color AND a `mat-icon` shape AND a text label.
+**Rejected:** Color-only differentiation.
+**Why:** WCAG 1.4.1 (Level A) requires that color is not the only means of conveying information. Users with colour blindness distinguish cards by icon shape alone; screen readers read the `aria-label` with the embedded count.
+
+---
+
 ## 15. Two `valueChanges` Subscriptions in `PolicyFilterComponent`
 
 **Chosen:** Immediate subscription for chips snapshot + debounced subscription for API/storage/URL.

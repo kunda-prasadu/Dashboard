@@ -67,3 +67,17 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Challenged:** Initially used a single debounced subscription for both chips and the API. Chips lagged 400 ms — visibly jarring. Split into two subscriptions to give instant chip feedback without extra API calls.
 
 **Why:** `takeUntilDestroyed` without `DestroyRef` throws `NG0203` at runtime in method scope. Two subscriptions with different timing characteristics are the correct tool for two different responsiveness requirements.
+
+---
+
+## Phase 5 — Summary Panel
+
+**Accepted:** Server-computed summary only — never aggregate client-side. The server `/policies/summary` endpoint applies the same filters over all records; the client holds one page.
+
+**Accepted:** SVG arc with `stroke-dashoffset` driven by a `computed()` signal. `prefers-reduced-motion` handled purely in CSS — no JS media-query check needed.
+
+**Accepted:** Color + icon + text on every status card — never color alone. WCAG 1.4.1 compliance.
+
+**Challenged:** Initial design had summary numbers computed from `store.policies()` (current page only). Corrected to `store.summary()` — a server aggregate. Page-level aggregation would show wrong totals when filters match more records than one page.
+
+**Why:** KPI accuracy requires the full filtered dataset, not one page. SVG with CSS animation is the minimal, zero-dependency approach for a single-metric arc indicator.

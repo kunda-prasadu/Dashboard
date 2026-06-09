@@ -34,10 +34,14 @@ src/app/
         │   │   ├── policy-table.component.ts   # Presentational table — reads store signals, emits rowClick
         │   │   ├── policy-table.component.html # mat-table: 9 columns, sticky header/actions, empty state
         │   │   └── policy-table.component.scss # Status/LOB badges, compact layout, Material tokens
-        │   └── policy-filter/
-        │       ├── policy-filter.component.ts   # Reactive filter bar — dual valueChanges subs, URL+storage sync
-        │       ├── policy-filter.component.html # Search, multi-selects, date pickers, active-filter chips
-        │       └── policy-filter.component.scss # Responsive grid layout, chip row
+        │   ├── policy-filter/
+        │   │   ├── policy-filter.component.ts   # Reactive filter bar — dual valueChanges subs, URL+storage sync
+        │   │   ├── policy-filter.component.html # Search, multi-selects, date pickers, active-filter chips
+        │   │   └── policy-filter.component.scss # Responsive grid layout, chip row
+        │   └── summary-panel/
+        │       ├── summary-panel.component.ts   # KPI panel — computed signals from store.summary()
+        │       ├── summary-panel.component.html # 4 status cards, GWP bars, SVG expiry arc
+        │       └── summary-panel.component.scss # Card colors, bar chart, arc animation (reduced-motion aware)
         └── pages/
             └── policy-overview/
                 └── policy-overview.page.ts     # Routed shell — composes filter + table, bootstraps loadPolicies()
@@ -73,6 +77,15 @@ mock-api/
 - SSR-safe wrapper around `localStorage` — checks `isPlatformBrowser` before accessing `window`
 - Catches storage errors silently (private browsing, quota exceeded)
 - **Why**: Centralised storage abstraction — swap backing store without touching callers; prevents SSR crashes
+
+### `features/policy-dashboard/components/SummaryPanelComponent`
+- **Reads `store.summary()` only** — a server-computed aggregate over the current filtered set; always consistent with the table
+- **4 status cards** — each clickable, emits `statusClick(PolicyStatus)` for drilldown; color + icon + text (never color alone)
+- **GWP by LOB bar chart** — `lobEntries()` computed signal sorts by amount desc, normalises widths to the largest bar
+- **SVG expiry arc** — `expiryFraction()` computed signal drives `stroke-dashoffset`; `prefers-reduced-motion` disables the CSS transition
+- Emits `expiryClick()` for drilldown to active-expiring policies
+- **Why server-computed**: Aggregating over one page of table data would give wrong totals. The server applies the same filters to all 250 records.
+- **Why SVG arc**: Animatable without JavaScript, works on any background, respects system motion preferences via a single CSS media query
 
 ### `features/policy-dashboard/components/PolicyFilterComponent`
 - **Reactive form** with two `valueChanges` subscriptions:

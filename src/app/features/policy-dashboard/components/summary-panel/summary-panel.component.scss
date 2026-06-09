@@ -1,0 +1,235 @@
+/**
+ * summary-panel.component.scss
+ *
+ * What: Layout and visual styles for the KPI summary panel.
+ *
+ * Why CSS custom properties for arc colors: The arc must stay visible on both
+ * light and dark themes. Using --mat-sys-* tokens means it inherits the active
+ * theme automatically without any JS.
+ *
+ * Why prefers-reduced-motion on the arc: Users with vestibular disorders can
+ * be harmed by motion. Disabling the transition here means no JS is needed to
+ * detect the preference — the OS setting is respected at the CSS level.
+ */
+
+.summary-panel {
+  background: var(--mat-sys-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--mat-sys-level1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── Status cards ──────────────────────────────────────────────────────────────
+
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.status-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  user-select: none;
+
+  &:hover, &:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: var(--mat-sys-level2);
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  &.card-active    { background: #e8f5e9; }
+  &.card-pending   { background: #fff8e1; }
+  &.card-expired   { background: #fce4ec; }
+  &.card-cancelled { background: #f3e5f5; }
+}
+
+.card-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+
+  .card-active    & { color: #2e7d32; }
+  .card-pending   & { color: #e65100; }
+  .card-expired   & { color: #b71c1c; }
+  .card-cancelled & { color: #6a1b9a; }
+}
+
+.card-count {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+// ── Bottom row ────────────────────────────────────────────────────────────────
+
+.bottom-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0 0 12px;
+}
+
+// ── GWP bars ──────────────────────────────────────────────────────────────────
+
+.gwp-section {
+  flex: 1 1 280px;
+}
+
+.total-premium {
+  font-size: 0.82rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 12px;
+
+  strong {
+    color: var(--mat-sys-on-surface);
+    font-weight: 600;
+  }
+}
+
+.lob-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lob-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 90px;
+  align-items: center;
+  gap: 8px;
+}
+
+.lob-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bar-track {
+  height: 8px;
+  background: var(--mat-sys-surface-container-high);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 300ms ease;
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+
+  &.bar-property { background: #1565c0; }
+  &.bar-casualty { background: #283593; }
+  &.bar-ah       { background: #00695c; }
+  &.bar-marine   { background: #0277bd; }
+}
+
+.lob-amount {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.no-data {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin: 0;
+}
+
+// ── Expiry arc ────────────────────────────────────────────────────────────────
+
+.expiry-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.arc-button {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 4px;
+  }
+
+  &:hover .arc-fill { opacity: 0.85; }
+}
+
+.arc-svg {
+  display: block;
+}
+
+.arc-track {
+  stroke: var(--mat-sys-surface-container-high);
+}
+
+.arc-fill {
+  stroke: var(--mat-sys-error);
+  transition: stroke-dashoffset 600ms ease;
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+}
+
+.arc-label {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.arc-count {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--mat-sys-on-surface);
+  line-height: 1;
+}
+
+.arc-sub {
+  font-size: 0.65rem;
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+}
