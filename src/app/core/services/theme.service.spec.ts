@@ -1,61 +1,45 @@
-/**
- * ThemeService tests
- *
- * Strategy: Stub StorageService so tests don't touch real localStorage.
- * Provide a browser PLATFORM_ID so isPlatformBrowser returns true.
- * We cannot directly test DOM class changes from an effect() in a headless
- * test without a DOM fixture — instead we test the signal values and
- * verify StorageService.set is called with the correct arguments.
- *
- * Tests cover:
- *   - toggle() flips isDark
- *   - setDark(true/false) sets isDark and persists via StorageService
- *   - init: stored value (true) wins over system preference
- *   - init: stored value (false) wins over system preference
- *   - init: system prefers-dark when nothing stored
- *   - init: defaults to light when nothing stored and no system preference
- *   - SSR: resolves to false without calling matchMedia
- */
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, PLATFORM_ID } from '@angular/core';
 import { ThemeService } from './theme.service';
 import { StorageService } from './storage.service';
 import { STORAGE_KEYS } from '../../features/policy-dashboard/constants/policy.constants';
 
-function makeStorage(stored: boolean | null = null): jasmine.SpyObj<StorageService> {
+function makeStorage(opts: { dark?: boolean | null; palette?: string | null } = {}): jasmine.SpyObj<StorageService> {
   const spy = jasmine.createSpyObj<StorageService>('StorageService', ['get', 'set', 'remove']);
-  spy.get.and.returnValue(stored as any);
+  spy.get.and.callFake(<T>(key: string): T | null => {
+    if (key === STORAGE_KEYS.THEME)   return (opts.dark   ?? null) as T | null;
+    if (key === STORAGE_KEYS.PALETTE) return (opts.palette ?? null) as T | null;
+    return null;
+  });
   return spy;
 }
 
 function buildService(opts: {
-  stored?: boolean | null;
+  dark?: boolean | null;
+  palette?: string | null;
   prefersDark?: boolean;
   platform?: string;
 } = {}): ThemeService {
-  const { stored = null, prefersDark = false, platform = 'browser' } = opts;
+  const { dark = null, palette = null, prefersDark = false, platform = 'browser' } = opts;
 
-  // Stub window.matchMedia before service construction
   if (platform === 'browser') {
     spyOn(window, 'matchMedia').and.returnValue({
       matches: prefersDark,
       media: '',
       onchange: null,
-      addListener: () => {},
+      addListener:    () => {},
       removeListener: () => {},
-      addEventListener: () => {},
+      addEventListener:    () => {},
       removeEventListener: () => {},
       dispatchEvent: () => false,
     } as MediaQueryList);
   }
 
-  const storage = makeStorage(stored);
-
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
       ThemeService,
-      { provide: StorageService, useValue: storage },
+      { provide: StorageService, useValue: makeStorage({ dark, palette }) },
       { provide: PLATFORM_ID, useValue: platform },
     ],
   });
@@ -64,76 +48,184 @@ function buildService(opts: {
 }
 
 describe('ThemeService', () => {
-  afterEach(() => TestBed.resetTestingModule());
-
-  // ── toggle ───────────────────────────────────────────────────────────────
-
-  it('toggle() flips isDark from false to true', () => {
-    const svc = buildService({ stored: false });
-    expect(svc.isDark()).toBeFalse();
-    svc.toggle();
-    expect(svc.isDark()).toBeTrue();
+  afterEach(() => {
+    // Clean up any palette-* or dark-theme classes added to <html> by effects
+    document.documentElement.classList.remove('dark-theme');
+    Array.from(document.documentElement.classList)
+      .filter(c => c.startsWith('palette-'))
+      .forEach(c => document.documentElement.classList.remove(c));
+    TestBed.resetTestingModule();
   });
 
-  it('toggle() flips isDark from true to false', () => {
-    const svc = buildService({ stored: true });
-    expect(svc.isDark()).toBeTrue();
-    svc.toggle();
-    expect(svc.isDark()).toBeFalse();
+  // ── isDark: toggle ──────────────────────────────────────────────────────────
+
+  describe('toggle()', () => {
+    it('flips isDark from false to true', () => {
+      const svc = buildService({ dark: false });
+      svc.toggle();
+      expect(svc.isDark()).toBeTrue();
+    });
+
+    it('flips isDark from true to false', () => {
+      const svc = buildService({ dark: true });
+      svc.toggle();
+      expect(svc.isDark()).toBeFalse();
+    });
   });
 
-  // ── setDark ──────────────────────────────────────────────────────────────
+  // ── isDark: setDark ─────────────────────────────────────────────────────────
 
-  it('setDark(true) sets isDark signal to true and persists', () => {
-    const svc = buildService({ stored: false });
-    const storage = TestBed.inject(StorageService) as jasmine.SpyObj<StorageService>;
+  describe('setDark()', () => {
+    it('sets isDark signal to true and persists to storage', () => {
+      const svc     = buildService({ dark: false });
+      const storage = TestBed.inject(StorageService) as jasmine.SpyObj<StorageService>;
+      svc.setDark(true);
+      expect(svc.isDark()).toBeTrue();
+      expect(storage.set).toHaveBeenCalledWith(STORAGE_KEYS.THEME, true);
+    });
 
-    svc.setDark(true);
+    it('sets isDark signal to false and persists to storage', () => {
+      const svc     = buildService({ dark: true });
+      const storage = TestBed.inject(StorageService) as jasmine.SpyObj<StorageService>;
+      svc.setDark(false);
+      expect(svc.isDark()).toBeFalse();
+      expect(storage.set).toHaveBeenCalledWith(STORAGE_KEYS.THEME, false);
+    });
 
-    expect(svc.isDark()).toBeTrue();
-    expect(storage.set).toHaveBeenCalledWith(STORAGE_KEYS.THEME, true);
+    it('adds dark-theme class to <html> when set to true', () => {
+      const svc = buildService({ dark: false });
+      svc.setDark(true);
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('dark-theme')).toBeTrue();
+    });
+
+    it('removes dark-theme class from <html> when set to false', () => {
+      document.documentElement.classList.add('dark-theme');
+      const svc = buildService({ dark: true });
+      svc.setDark(false);
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('dark-theme')).toBeFalse();
+    });
   });
 
-  it('setDark(false) sets isDark signal to false and persists', () => {
-    const svc = buildService({ stored: true });
-    const storage = TestBed.inject(StorageService) as jasmine.SpyObj<StorageService>;
+  // ── isDark: initialisation priority ─────────────────────────────────────────
 
-    svc.setDark(false);
+  describe('isDark initialisation', () => {
+    it('uses stored true even when system prefers light', () => {
+      expect(buildService({ dark: true, prefersDark: false }).isDark()).toBeTrue();
+    });
 
-    expect(svc.isDark()).toBeFalse();
-    expect(storage.set).toHaveBeenCalledWith(STORAGE_KEYS.THEME, false);
+    it('uses stored false even when system prefers dark', () => {
+      expect(buildService({ dark: false, prefersDark: true }).isDark()).toBeFalse();
+    });
+
+    it('falls back to system preference (dark) when nothing is stored', () => {
+      expect(buildService({ dark: null, prefersDark: true }).isDark()).toBeTrue();
+    });
+
+    it('falls back to light when nothing is stored and system prefers light', () => {
+      expect(buildService({ dark: null, prefersDark: false }).isDark()).toBeFalse();
+    });
+
+    it('defaults to false on server platform without calling matchMedia', () => {
+      const mMediaSpy = spyOn(window, 'matchMedia');
+      const svc = buildService({ dark: null, platform: 'server' });
+      expect(svc.isDark()).toBeFalse();
+      expect(mMediaSpy).not.toHaveBeenCalled();
+    });
   });
 
-  // ── init: stored value wins ───────────────────────────────────────────────
+  // ── activePalette: initialisation ───────────────────────────────────────────
 
-  it('initialises to true when stored value is true (overrides system pref)', () => {
-    const svc = buildService({ stored: true, prefersDark: false });
-    expect(svc.isDark()).toBeTrue();
+  describe('activePalette initialisation', () => {
+    it('defaults to "azure" when no palette is stored', () => {
+      expect(buildService({ palette: null }).activePalette()).toBe('azure');
+    });
+
+    it('uses the stored palette id when present', () => {
+      expect(buildService({ palette: 'forest' }).activePalette()).toBe('forest');
+    });
+
+    it('applies palette-azure class to <html> on first render', () => {
+      buildService({ palette: null });
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('palette-azure')).toBeTrue();
+    });
+
+    it('applies stored palette class to <html> on first render', () => {
+      buildService({ palette: 'violet' });
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('palette-violet')).toBeTrue();
+    });
   });
 
-  it('initialises to false when stored value is false (overrides system pref)', () => {
-    const svc = buildService({ stored: false, prefersDark: true });
-    expect(svc.isDark()).toBeFalse();
+  // ── setPalette ──────────────────────────────────────────────────────────────
+
+  describe('setPalette()', () => {
+    it('updates activePalette signal', () => {
+      const svc = buildService({ palette: 'azure' });
+      svc.setPalette('crimson');
+      expect(svc.activePalette()).toBe('crimson');
+    });
+
+    it('persists the new palette id to storage', () => {
+      const svc     = buildService({ palette: 'azure' });
+      const storage = TestBed.inject(StorageService) as jasmine.SpyObj<StorageService>;
+      svc.setPalette('rose');
+      expect(storage.set).toHaveBeenCalledWith(STORAGE_KEYS.PALETTE, 'rose');
+    });
+
+    it('adds the new palette-* class to <html>', () => {
+      const svc = buildService({ palette: 'azure' });
+      svc.setPalette('teal');
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('palette-teal')).toBeTrue();
+    });
+
+    it('removes the previous palette-* class when switching palettes', () => {
+      const svc = buildService({ palette: 'azure' });
+      TestBed.flushEffects();
+      svc.setPalette('indigo');
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('palette-azure')).toBeFalse();
+      expect(document.documentElement.classList.contains('palette-indigo')).toBeTrue();
+    });
+
+    it('only ever has one palette-* class on <html> at a time', () => {
+      const svc = buildService({ palette: 'azure' });
+      svc.setPalette('forest');
+      svc.setPalette('amber');
+      svc.setPalette('violet');
+      TestBed.flushEffects();
+      const paletteClasses = Array.from(document.documentElement.classList)
+        .filter(c => c.startsWith('palette-'));
+      expect(paletteClasses.length).toBe(1);
+      expect(paletteClasses[0]).toBe('palette-violet');
+    });
+
+    it('does not affect isDark when called', () => {
+      const svc = buildService({ dark: false, palette: 'azure' });
+      svc.setPalette('rose');
+      expect(svc.isDark()).toBeFalse();
+    });
   });
 
-  // ── init: system preference ───────────────────────────────────────────────
+  // ── combined: dark + palette ────────────────────────────────────────────────
 
-  it('initialises to true when no stored value and system prefers dark', () => {
-    const svc = buildService({ stored: null, prefersDark: true });
-    expect(svc.isDark()).toBeTrue();
-  });
+  describe('dark + palette independence', () => {
+    it('dark-theme and palette-* classes coexist on <html>', () => {
+      const svc = buildService({ dark: false, palette: 'azure' });
+      svc.setDark(true);
+      svc.setPalette('forest');
+      TestBed.flushEffects();
+      expect(document.documentElement.classList.contains('dark-theme')).toBeTrue();
+      expect(document.documentElement.classList.contains('palette-forest')).toBeTrue();
+    });
 
-  it('initialises to false when no stored value and system prefers light', () => {
-    const svc = buildService({ stored: null, prefersDark: false });
-    expect(svc.isDark()).toBeFalse();
-  });
-
-  // ── SSR guard ─────────────────────────────────────────────────────────────
-
-  it('initialises to false on server platform without calling matchMedia', () => {
-    const matchMediaSpy = spyOn(window, 'matchMedia');
-    const svc = buildService({ stored: null, platform: 'server' });
-    expect(svc.isDark()).toBeFalse();
-    expect(matchMediaSpy).not.toHaveBeenCalled();
+    it('toggling dark does not change activePalette', () => {
+      const svc = buildService({ dark: false, palette: 'crimson' });
+      svc.toggle();
+      expect(svc.activePalette()).toBe('crimson');
+    });
   });
 });
