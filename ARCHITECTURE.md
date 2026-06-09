@@ -29,8 +29,14 @@ src/app/
         │   └── policy-api.service.ts  # Stateless HTTP service — getAll/getSummary/patch/flagPolicies
         ├── store/
         │   └── policy.store.ts        # Signal store — single source of truth, optimistic updates
-        ├── components/                # (Phase 3) Smart + presentational components
-        └── pages/                     # (Phase 3) Routed page shells
+        ├── components/
+        │   └── policy-table/
+        │       ├── policy-table.component.ts   # Presentational table — reads store signals, emits rowClick
+        │       ├── policy-table.component.html # mat-table: 9 columns, sticky header/actions, empty state
+        │       └── policy-table.component.scss # Status/LOB badges, compact layout, Material tokens
+        └── pages/
+            └── policy-overview/
+                └── policy-overview.page.ts     # Routed shell — bootstraps store.loadPolicies() on init
 
 mock-api/
 ├── generate-data.js                   # Generates 250 APAC records with realistic distribution → db.json
@@ -58,6 +64,23 @@ mock-api/
 - `buildFilterParams()` is private and shared by `getAll()` and `getSummary()` — single source of param-building truth
 - `flagPolicies(ids[])` uses `forkJoin` to fire one `PATCH` per id in parallel
 - **Why**: Separation of concerns. The store orchestrates state; the service knows only the HTTP contract.
+
+### `features/policy-dashboard/components/PolicyTableComponent`
+- **Standalone, `ChangeDetectionStrategy.OnPush`** — only re-renders when signal values change
+- Presentational: reads `PolicyStore` signals; never calls the API directly
+- `[dataSource]="store.policies()"` — renders the current page only (no `MatTableDataSource`)
+- `[trackBy]="trackById"` on `<table mat-table>` — avoids full DOM tear-down on page change
+- **Controlled paginator**: `[length]`, `[pageIndex]`, `[pageSize]` all bound to store signals; `(page)` → `store.setPage()`
+- **Server-side sort**: `(matSortChange)` → `store.updateSort()`; sort state reflected back via `[matSortActive/Direction]`
+- Selection: `allSelected` / `someSelected` are `computed()` signals — header checkbox indeterminate state is derived, not stored
+- Accessibility: `role="region"` + `aria-label` on container; `aria-label` on every checkbox and icon button; `<th scope="col">`; `*matNoDataRow` empty state
+- **Why presentational**: Keeps the component testable without HTTP or real store setup (stub the store signals)
+
+### `features/policy-dashboard/pages/PolicyOverviewPage`
+- Lazy-loaded at `/policies` route via `loadComponent`
+- Calls `store.loadPolicies()` in `ngOnInit` — one authoritative trigger per navigation
+- Composes `PolicyTableComponent`; will add filter panel in Phase 4
+- **Why a page shell**: Keeps routing concerns (title, guards) at page level; child components stay route-agnostic
 
 ### `features/policy-dashboard/store/PolicyStore`
 - `providedIn: 'root'` — one instance for the feature lifetime
@@ -99,7 +122,7 @@ No client-side filtering, sorting, or pagination. The browser holds exactly one 
 `provideZonelessChangeDetection()` in `app.config.ts`. Zone.js is **not** in the app build polyfills.  
 Zone.js **is** in test polyfills — Karma's runner requires it; Angular CD inside tests uses `provideZonelessChangeDetection()`.
 
-All components: `ChangeDetectionStrategy.OnPush` (enforced in Phase 3+).
+All components use `ChangeDetectionStrategy.OnPush`. In a zoneless app this means Angular only checks a component when a signal it reads has changed — no zone triggers, no unnecessary traversals.
 
 ---
 

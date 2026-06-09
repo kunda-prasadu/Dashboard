@@ -1,3 +1,18 @@
+<!--
+  policy-table.component.html
+
+  What: Renders the current page of policies from PolicyStore using mat-table.
+  Nine columns: select (checkbox), policyNumber, policyHolderName, lineOfBusiness (badge),
+  status (badge), region, premium (compact M/K), flagged (icon), actions (view-details).
+
+  Key structural decisions:
+  - [dataSource]="store.policies()" — binds to the current-page signal directly (no MatTableDataSource)
+  - [trackBy]="trackById" on <table> — prevents full DOM re-render on page changes
+  - mat-sort + matSortActive/Direction bound to store signals — server sort state reflected in UI
+  - Sticky "select" column (left) and "actions" column (stickyEnd) stay visible on horizontal scroll
+  - *matNoDataRow provides an accessible empty state when filters return zero results
+  - Controlled mat-paginator: length/pageIndex/pageSize driven by store; (page) delegates to store.setPage()
+-->
 <section
   role="region"
   aria-label="Policy portfolio table"

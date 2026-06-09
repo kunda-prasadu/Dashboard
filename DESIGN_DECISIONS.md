@@ -78,6 +78,46 @@ Each decision records **what** was chosen, **why**, and what was **rejected**.
 
 ---
 
+## 10. Presentational Component Pattern for `PolicyTableComponent`
+
+**Chosen:** Component reads `PolicyStore` signals and emits `output()` events. No `HttpClient` injection.  
+**Rejected:** Smart component that calls `PolicyApiService` directly.  
+**Why:** Keeps the component testable with a simple stub — no `HttpTestingController`, no real store setup needed. Also means the same table can be reused in a different page or dialog without bringing its own data-fetching logic.
+
+---
+
+## 11. Controlled `MatPaginator` (No `MatTableDataSource`)
+
+**Chosen:** Bind `[length]`, `[pageIndex]`, `[pageSize]` directly to store signals; delegate `(page)` events to `store.setPage()`.  
+**Rejected:** Attaching the paginator to `MatTableDataSource` (Angular Material default).  
+**Why:** `MatTableDataSource` paginates client-side. It assumes all records are in memory and slices them locally. Our store holds one server page at a time — attaching `MatTableDataSource` would silently paginate within 25 records instead of fetching the next 25 from the server.
+
+---
+
+## 12. `trackBy` on `<table mat-table>`, Not on `*matRowDef`
+
+**Chosen:** `[trackBy]="trackById"` attribute on the `<table mat-table>` element.  
+**Rejected:** `[trackBy]` on the `<tr *matRowDef>` element (AI default).  
+**Why:** Angular Material's `CdkTable` reads `trackBy` from the table host element, not from the row definition directive. Placing it on the row def silently does nothing and causes a compile error in strict template checking.
+
+---
+
+## 13. Lazy-Loaded Page Shell via `loadComponent`
+
+**Chosen:** `/policies` route uses `loadComponent` to lazy-load `PolicyOverviewPage`.  
+**Rejected:** Eagerly importing `PolicyOverviewPage` in `app.routes.ts`.  
+**Why:** The table imports Angular Material modules (table, sort, paginator, checkbox, icons) which add ~250 kB to the initial bundle. Lazy-loading keeps the shell tiny and only pays that cost when the user navigates to `/policies`.
+
+---
+
+## 14. `formatPremium` — Compact M/K Notation
+
+**Chosen:** `S$1.2M`, `S$450K`, `S$1,200` — compact locale-aware display.  
+**Rejected:** Full number formatting (`S$1,250,000`).  
+**Why:** Premium values range from 1,000 to 5,000,000. Full numbers in a table column create visual noise and force the column too wide. Compact notation gives enough precision for portfolio scanning without overwhelming the layout.
+
+---
+
 ## 9. `forkJoin` for Parallel Page + Summary Fetch
 
 **Chosen:** `forkJoin({ page: getAll(...), summary: getSummary(...) })` in `loadPolicies()`.  
