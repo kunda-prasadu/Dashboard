@@ -122,6 +122,13 @@ describe('PolicyTableComponent', () => {
       expect(component.someSelected()).toBeTrue();
       expect(component.allSelected()).toBeFalse();
     });
+
+    it('allSelected() is false when the policy list is empty', () => {
+      // Hits the `ids.length > 0 &&` short-circuit false branch
+      storeSpy.policies.set([]);
+      fixture.detectChanges();
+      expect(component.allSelected()).toBeFalse();
+    });
   });
 
   describe('server-side sort', () => {

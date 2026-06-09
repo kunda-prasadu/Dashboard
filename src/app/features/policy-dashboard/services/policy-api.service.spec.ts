@@ -97,4 +97,27 @@ describe('PolicyApiService', () => {
       req.flush({ ...mockPolicy, id, flaggedForReview: true });
     });
   });
+
+  it('getAll — includes premiumMin, premiumMax, date range, and flaggedForReview params', () => {
+    service.getAll({
+      premiumMin: 1000,
+      premiumMax: 50000,
+      effectiveDateFrom: '2025-01-01',
+      effectiveDateTo: '2025-06-30',
+      expiryDateFrom: '2025-07-01',
+      expiryDateTo: '2026-06-30',
+      flaggedForReview: true
+    }).subscribe(res => expect(res).toEqual(mockPage));
+
+    const req = httpMock.expectOne(r => r.url === `${API}/policies`);
+    const p = req.request.params;
+    expect(p.get('premiumMin')).toBe('1000');
+    expect(p.get('premiumMax')).toBe('50000');
+    expect(p.get('effectiveDateFrom')).toBe('2025-01-01');
+    expect(p.get('effectiveDateTo')).toBe('2025-06-30');
+    expect(p.get('expiryDateFrom')).toBe('2025-07-01');
+    expect(p.get('expiryDateTo')).toBe('2026-06-30');
+    expect(p.get('flaggedForReview')).toBe('true');
+    req.flush(mockPage);
+  });
 });
