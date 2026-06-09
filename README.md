@@ -1,59 +1,111 @@
-# PolicyDashboard
+# Chubb APAC Policy Overview Dashboard
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.3.
+A production-quality insurance policy management dashboard built with **Angular 20**, **Angular Material 3**, and a custom **signal-based state store**. Designed for Chubb APAC operations to provide real-time visibility into policy portfolios across regions and lines of business.
 
-## Development server
+---
 
-To start a local development server, run:
+## Tech Stack
 
+| Layer | Technology |
+|---|---|
+| Framework | Angular 20 — standalone components, zoneless, signals |
+| UI Library | Angular Material 3 (local icons, no CDN) |
+| State | Custom signal store (`PolicyStore`) — no NgRx |
+| HTTP | `HttpClient` with functional interceptors (`withFetch`) |
+| Mock API | Custom Express ESM server (server-side filter/sort/paginate) |
+| Tests | Jasmine + Karma (18 specs, all green) |
+| Styles | SCSS + Material Design tokens |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js `>=24.0.0`
+- npm `>=11`
+
+### Install
 ```bash
-ng serve
+npm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### Generate mock data (required before starting API)
 ```bash
-ng generate component component-name
+npm run generate:mock
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+### Run mock API (port 3000)
 ```bash
-ng generate --help
+npm run start:api
 ```
 
-## Building
+### Run Angular dev server (port 4200)
+```bash
+npm start
+```
 
-To build the project run:
-
+### Build
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
+### Run tests
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+---
 
-For end-to-end (e2e) testing, run:
+## Project Structure
 
-```bash
-ng e2e
+```
+src/app/
+├── core/
+│   ├── services/         # Singleton services (LoggerService)
+│   └── interceptors/     # Functional HTTP interceptors (error)
+├── shared/               # Reusable presentational components & pipes
+└── features/
+    └── policy-dashboard/
+        ├── models/       # TypeScript interfaces (string unions, no enums)
+        ├── constants/    # Domain constants — statuses, regions, LOB, currencies
+        ├── services/     # PolicyApiService — HTTP, no state
+        ├── store/        # PolicyStore — signal-based, single source of truth
+        ├── components/   # Smart + presentational components
+        └── pages/        # Routed page components
+
+mock-api/
+├── generate-data.js      # Generates 250 APAC policy records → db.json
+└── server.js             # Express mock API — filter, sort, paginate, summarise
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+---
 
-## Additional Resources
+## Key Architectural Decisions
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- **Zoneless Angular**: `provideZonelessChangeDetection()` — no zone.js in app polyfills. Explicit, predictable rendering.
+- **Signal store over NgRx**: Single feature, ~¼ the boilerplate, native Angular, zero extra deps.
+- **Server-side filtering**: All filter/sort/paginate logic lives in the Express server. The browser holds one page of data at a time.
+- **String unions over enums**: `type PolicyStatus = 'Active' | 'Expired' | ...` — tree-shakeable, no runtime overhead.
+- **Functional HTTP interceptors**: Stateless, composable, testable without class instantiation.
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md), [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md), and [TRADE_OFFS.md](./TRADE_OFFS.md) for full detail.
+
+---
+
+## API Reference
+
+| Endpoint | Description |
+|---|---|
+| `GET /policies` | Filtered + sorted + paginated list → `{data, total}` |
+| `GET /policies/summary` | Aggregate stats over same filters |
+| `GET /policies/:id` | Single policy record |
+| `PATCH /policies/:id` | In-memory update (does not persist to db.json) |
+
+### Filter Parameters (`/policies` + `/policies/summary`)
+`search`, `status[]`, `region[]`, `lineOfBusiness[]`, `currency[]`, `flaggedForReview`, `premiumMin`, `premiumMax`, `effectiveDateFrom`, `effectiveDateTo`, `expiryDateFrom`, `expiryDateTo`, `sort`, `order`, `page`, `pageSize`
+
+---
+
+## AI Journal
+
+All AI-assisted decisions — accepted, challenged, and overridden — are tracked in [AI-JOURNAL.md](./AI-JOURNAL.md).
