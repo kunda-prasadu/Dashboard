@@ -13,7 +13,7 @@ A production-quality insurance policy management dashboard built with **Angular 
 | State | Custom signal store (`PolicyStore`) — no NgRx |
 | HTTP | `HttpClient` with functional interceptors (`withFetch`) |
 | Mock API | Custom Express ESM server (server-side filter/sort/paginate) |
-| Tests | Jasmine + Karma (18 specs, all green) |
+| Tests | Jasmine + Karma (66 specs, all green) |
 | Styles | SCSS + Material Design tokens |
 
 ---
@@ -71,9 +71,10 @@ src/app/
         ├── services/          # PolicyApiService — HTTP, no state
         ├── store/             # PolicyStore — signal-based, single source of truth
         ├── components/
-        │   ├── policy-table/   # Presentational table — server sort, controlled paginator, selection
-        │   ├── policy-filter/  # Reactive filter bar — dual subs, URL+localStorage sync, chips
-        │   └── summary-panel/  # KPI panel — status cards, GWP bars, SVG expiry arc
+        │   ├── policy-table/    # Presentational table — server sort, controlled paginator, selection
+        │   ├── policy-filter/   # Reactive filter bar — dual subs, URL+localStorage sync, chips
+        │   ├── summary-panel/   # KPI panel — status cards, GWP bars, SVG expiry arc
+        │   └── bulk-action-bar/ # Contextual toolbar — bulk flag-for-review, retry, clear selection
         └── pages/
             └── policy-overview/ # Routed shell — composes filter + table, bootstraps store
 

@@ -1,0 +1,74 @@
+// bulk-action-bar.component.scss
+//
+// Sticky bar that slides in above the table when rows are selected.
+// Uses Material Design tokens for consistent color, elevation, and spacing.
+
+:host {
+  display: block;
+}
+
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  border-radius: 8px;
+  box-shadow: var(--mat-sys-level2);
+
+  // Slide-in animation when bar appears
+  animation: slide-in 180ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selection-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--mat-sys-body-medium);
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--mat-sys-primary);
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flag-btn {
+  // Override Material flat button to use primary-container contrast tokens
+  --mdc-filled-button-container-color: var(--mat-sys-primary);
+  --mdc-filled-button-label-text-color: var(--mat-sys-on-primary);
+}
+
+.clear-btn {
+  color: var(--mat-sys-on-primary-container);
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+}

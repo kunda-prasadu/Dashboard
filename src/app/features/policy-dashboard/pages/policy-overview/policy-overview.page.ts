@@ -17,6 +17,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/cor
 import { PolicyTableComponent } from '../../components/policy-table/policy-table.component';
 import { PolicyFilterComponent } from '../../components/policy-filter/policy-filter.component';
 import { SummaryPanelComponent } from '../../components/summary-panel/summary-panel.component';
+import { BulkActionBarComponent } from '../../components/bulk-action-bar/bulk-action-bar.component';
 import { PolicyStore } from '../../store/policy.store';
 import { PolicyStatus } from '../../models/policy.model';
 
@@ -24,7 +25,7 @@ import { PolicyStatus } from '../../models/policy.model';
   selector: 'app-policy-overview',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PolicyTableComponent, PolicyFilterComponent, SummaryPanelComponent],
+  imports: [PolicyTableComponent, PolicyFilterComponent, SummaryPanelComponent, BulkActionBarComponent],
   template: `
     <main class="policy-overview-page">
       <h1 class="page-title">Policy Portfolio</h1>
@@ -33,6 +34,9 @@ import { PolicyStatus } from '../../models/policy.model';
         (statusClick)="onStatusDrilldown($event)"
         (expiryClick)="onExpiryDrilldown()"
       />
+      @if (store.hasSelection()) {
+        <app-bulk-action-bar />
+      }
       <app-policy-table (rowClick)="onRowClick($event)" />
     </main>
   `,
@@ -53,7 +57,7 @@ import { PolicyStatus } from '../../models/policy.model';
   `]
 })
 export class PolicyOverviewPage implements OnInit {
-  private readonly store = inject(PolicyStore);
+  protected readonly store = inject(PolicyStore);
 
   ngOnInit(): void {
     this.store.loadPolicies();

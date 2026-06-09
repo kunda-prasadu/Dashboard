@@ -11,7 +11,7 @@
 
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, Observable, tap, throwError } from 'rxjs';
 import { PolicyApiService } from '../services/policy-api.service';
 import { Policy } from '../models/policy.model';
 import { PolicyFilter } from '../models/policy-filter.model';
@@ -131,9 +131,13 @@ export class PolicyStore {
     this._selectedIds.set(new Set());
   }
 
-  flagSelectedPolicies(): void {
+  /**
+   * Optimistically flags selected policies for review and returns an Observable so
+   * callers (e.g. BulkActionBarComponent) can show snackbar on success/failure.
+   * The store handles all state mutations; the caller only handles UI feedback.
+   */
+  flagSelectedPolicies(): Observable<Policy[]> {
     const ids = [...this._selectedIds()];
-    if (!ids.length) return;
 
     // Optimistic update — flip flags immediately before HTTP confirms
     this._policies.update(list =>
@@ -141,24 +145,30 @@ export class PolicyStore {
     );
     this._lastFailedFlagIds.set([]);
 
-    this.api.flagPolicies(ids)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (updated) => {
-          this._policies.update(list =>
-            list.map(p => updated.find(u => u.id === p.id) ?? p)
-          );
-          this.clearSelection();
-        },
-        error: (err: NormalisedHttpError) => {
-          // Rollback optimistic update
-          this._policies.update(list =>
-            list.map(p => ids.includes(p.id) ? { ...p, flaggedForReview: false } : p)
-          );
-          this._lastFailedFlagIds.set(ids);
-          this._error.set(err.message);
-        }
-      });
+    return this.api.flagPolicies(ids).pipe(
+      tap((updated) => {
+        this._policies.update(list =>
+          list.map(p => updated.find(u => u.id === p.id) ?? p)
+        );
+        this.clearSelection();
+      }),
+      catchError((err: NormalisedHttpError) => {
+        // Rollback optimistic update
+        this._policies.update(list =>
+          list.map(p => ids.includes(p.id) ? { ...p, flaggedForReview: false } : p)
+        );
+        this._lastFailedFlagIds.set(ids);
+        this._error.set(err.message);
+        return throwError(() => err);
+      })
+    );
+  }
+
+  /** Re-attempts flagging the IDs that failed in the previous call. */
+  retryLastFailedFlag(): Observable<Policy[]> {
+    const ids = this._lastFailedFlagIds();
+    this._selectedIds.set(new Set(ids));
+    return this.flagSelectedPolicies();
   }
 
   renewPolicy(id: string): void {

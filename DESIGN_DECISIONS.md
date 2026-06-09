@@ -70,6 +70,26 @@ Each decision records **what** was chosen, **why**, and what was **rejected**.
 
 ---
 
+## 22. `flagSelectedPolicies()` Returns `Observable<Policy[]>`
+
+**Chosen:** Store method returns a piped Observable (tap + catchError + throwError). Caller subscribes and handles snackbar feedback.  
+**Rejected:** Store subscribes internally (`void` return); caller notified via a separate Subject or effect.  
+**Why:**
+- One Observable carries both the data and the error signal — the caller doesn't need a second notification channel.
+- State mutations (optimistic update, rollback, `_lastFailedFlagIds`) stay in `tap`/`catchError` inside the store.
+- UI concerns (snackbar message, plural text, retry wiring) stay in the component.
+- The pattern is standard RxJS — no Angular-specific indirection required.
+
+---
+
+## 23. Snackbar Spy via `fixture.debugElement.injector.get()`
+
+**Chosen:** In tests, obtain `MatSnackBar` from `fixture.debugElement.injector.get(MatSnackBar)` and call `spyOn` on the instance.  
+**Rejected:** Provide a `jasmine.createSpyObj` at `TestBed` level as `{ provide: MatSnackBar, useValue: spy }`.  
+**Why:** Standalone components import `MatSnackBarModule` directly into their own injector scope. A spy provided at the root TestBed level is shadowed by the module-level provider inside the component. Getting the instance from the fixture's injector guarantees we spy on the exact object the component holds.
+
+---
+
 ## 8. `takeUntilDestroyed(destroyRef)` in Method Scope
 
 **Chosen:** Inject `DestroyRef` explicitly and pass it to every `takeUntilDestroyed(this.destroyRef)` call.  
