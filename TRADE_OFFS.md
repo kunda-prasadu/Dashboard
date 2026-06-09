@@ -60,6 +60,30 @@ Honest accounting of what we gave up for each architectural choice.
 
 ---
 
+## Controlled Paginator vs `MatTableDataSource`
+
+**Gain:** True server-side pagination — each page change hits the API; `store.total()` drives the paginator length.  
+**Cost:** More wiring — three bindings (`[length]`, `[pageIndex]`, `[pageSize]`) plus a `(page)` handler vs. one `[dataSource]` assignment.  
+**Mitigation:** The extra bindings are declarative and live entirely in the template; the component stays clean.
+
+---
+
+## Compact Premium Formatting (`formatPremium`)
+
+**Gain:** Consistent, readable column — no wide numbers breaking the table layout.  
+**Cost:** Precision loss — `S$1.25M` rounds to `S$1.3M`. An underwriter needing the exact figure must open the detail view.  
+**Mitigation:** The detail view (Phase 4+) shows the full unformatted amount. The table is a scanning tool, not an audit tool.
+
+---
+
+## Lazy-Loaded Page Shell
+
+**Gain:** Initial bundle stays small (~264 kB); Material modules only load on navigation to `/policies`.  
+**Cost:** First navigation to `/policies` has a small chunk-load delay (~1 kB chunk in dev; negligible in prod with preloading).  
+**Mitigation:** Angular's `PreloadAllModules` strategy or a route-level `prefetchOn: 'hover'` can eliminate the perceived delay.
+
+---
+
 ## Optimistic Updates without Confirmation
 
 **Gain:** Instant UI feedback — flagging a policy feels immediate.  

@@ -61,17 +61,19 @@ ng test
 ```
 src/app/
 ├── core/
-│   ├── services/         # Singleton services (LoggerService)
-│   └── interceptors/     # Functional HTTP interceptors (error)
-├── shared/               # Reusable presentational components & pipes
+│   ├── services/              # Singleton services (LoggerService)
+│   └── interceptors/          # Functional HTTP interceptors (error)
+├── shared/                    # Reusable presentational components & pipes
 └── features/
     └── policy-dashboard/
-        ├── models/       # TypeScript interfaces (string unions, no enums)
-        ├── constants/    # Domain constants — statuses, regions, LOB, currencies
-        ├── services/     # PolicyApiService — HTTP, no state
-        ├── store/        # PolicyStore — signal-based, single source of truth
-        ├── components/   # Smart + presentational components
-        └── pages/        # Routed page components
+        ├── models/            # TypeScript interfaces (string unions, no enums)
+        ├── constants/         # Domain constants — statuses, regions, LOB, currencies
+        ├── services/          # PolicyApiService — HTTP, no state
+        ├── store/             # PolicyStore — signal-based, single source of truth
+        ├── components/
+        │   └── policy-table/  # Presentational table — server sort, controlled paginator, selection
+        └── pages/
+            └── policy-overview/ # Routed shell — bootstraps store, composes components
 
 mock-api/
 ├── generate-data.js      # Generates 250 APAC policy records → db.json
