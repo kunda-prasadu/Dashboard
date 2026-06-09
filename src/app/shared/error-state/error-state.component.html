@@ -1,0 +1,16 @@
+<!-- error-state.component.html -->
+<div class="error-state" role="alert" aria-live="assertive">
+  <mat-icon class="error-icon" aria-hidden="true">error_outline</mat-icon>
+  <h2 class="error-title">Something went wrong</h2>
+  <p class="error-message">{{ message() }}</p>
+  <button
+    mat-flat-button
+    color="warn"
+    class="retry-btn"
+    aria-label="Retry loading policy data"
+    (click)="onRetry()"
+  >
+    <mat-icon aria-hidden="true">refresh</mat-icon>
+    Try again
+  </button>
+</div>

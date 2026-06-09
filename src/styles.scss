@@ -153,6 +153,47 @@ body {
   }
 }
 
+// ── Keyboard focus indicators (WCAG 2.1 AA — 2.4.7 Focus Visible) ───────────
+// Use :focus-visible so mouse clicks don't show the ring, but keyboard/SR do.
+
+:focus-visible {
+  outline: 3px solid var(--ph-primary);
+  outline-offset: 3px;
+  border-radius: var(--ph-radius-sm);
+}
+
+// Material button/icon-button resets the outline — restore it for keyboard users
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid var(--ph-primary);
+  outline-offset: 3px;
+}
+
+// ── Skip navigation link (WCAG 2.4.1) ────────────────────────────────────────
+// Visually hidden until focused — must be the first focusable element in the DOM.
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--ph-primary);
+  color: var(--ph-on-primary);
+  font: var(--ph-font-label);
+  font-weight: 600;
+  border-radius: 0 0 var(--ph-radius-md) var(--ph-radius-md);
+  text-decoration: none;
+  transition: top 100ms ease;
+
+  &:focus {
+    top: 0;
+    outline: 3px solid var(--ph-on-primary);
+    outline-offset: -4px;
+  }
+}
+
 // ── Snackbar panel-class overrides ───────────────────────────────────────────
 
 .snack-success .mdc-snackbar__surface {

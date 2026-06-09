@@ -1,0 +1,53 @@
+<!-- loading-skeleton.component.html — Dashboard-shaped skeleton screens -->
+<div
+  class="skeleton-root"
+  role="status"
+  aria-label="Loading policy data"
+  aria-live="polite"
+  aria-busy="true"
+>
+  <!-- Filter bar skeleton -->
+  <div class="skeleton-filter-bar">
+    <div class="bone bone--search"></div>
+    <div class="bone bone--select"></div>
+    <div class="bone bone--select"></div>
+    <div class="bone bone--select"></div>
+    <div class="bone bone--btn"></div>
+  </div>
+
+  <!-- Summary cards skeleton -->
+  <div class="skeleton-cards">
+    @for (card of statusCards; track $index) {
+      <div class="skeleton-card">
+        <div class="bone bone--icon"></div>
+        <div class="bone bone--count"></div>
+        <div class="bone bone--label"></div>
+      </div>
+    }
+  </div>
+
+  <!-- Table skeleton -->
+  <div class="skeleton-table">
+    <!-- Header row -->
+    <div class="skeleton-thead">
+      @for (col of tableCols; track $index) {
+        <div class="bone bone--th" [style.width]="col"></div>
+      }
+    </div>
+    <!-- Data rows -->
+    @for (row of tableRows; track $index) {
+      <div class="skeleton-row">
+        <div class="bone bone--checkbox"></div>
+        <div class="bone bone--cell-md"></div>
+        <div class="bone bone--cell-lg"></div>
+        <div class="bone bone--cell-sm"></div>
+        <div class="bone bone--badge"></div>
+        <div class="bone bone--cell-sm"></div>
+        <div class="bone bone--cell-sm"></div>
+        <div class="bone bone--cell-sm"></div>
+      </div>
+    }
+  </div>
+
+  <span class="sr-only">Loading, please wait…</span>
+</div>

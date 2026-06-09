@@ -73,6 +73,22 @@ mock-api/
 - SSR-safe: skips `matchMedia` and DOM access when not in a browser
 - **Why signal + effect**: Unidirectional — signal changes propagate to DOM through the effect; no manual DOM imperative calls outside the effect
 
+### `shared/loading-skeleton/LoadingSkeletonComponent`
+- Spatially accurate animated placeholder: filter bar strip, 4 status card bones, 8 table row bones
+- `role="status"` + `aria-live="polite"` + `aria-busy="true"` — screen readers announce loading
+- CSS shimmer via `background-image` gradient + `@keyframes`; `prefers-reduced-motion` disables animation
+- **Why skeleton (not spinner)**: fills space with recognisable shapes so the eye lands in the right place
+
+### `shared/empty-state/EmptyStateComponent`
+- Store-agnostic: receives `message` input, emits `clearFilters` output
+- `role="status"` + `aria-live="polite"` — announced when filters return zero results
+- **Why store-agnostic**: reusable in any list view; parent decides what "clear" means
+
+### `shared/error-state/ErrorStateComponent`
+- Store-agnostic: receives `message` input, emits `retry` output
+- `role="alert"` + `aria-live="assertive"` — interrupts screen reader immediately (errors are urgent)
+- **Why `role="alert"` not `role="status"`**: errors require immediate attention; polite announcement would be missed
+
 ### `shared/theme-picker/ThemePickerComponent`
 - `mat-icon-button` with `role="switch"` + `aria-checked` + dynamic `aria-label`
 - Icon flips between `dark_mode` / `light_mode` based on `theme.isDark()`
@@ -144,8 +160,11 @@ mock-api/
 ### `features/policy-dashboard/pages/PolicyOverviewPage`
 - Lazy-loaded at `/policies` route via `loadComponent`
 - Calls `store.loadPolicies()` in `ngOnInit` — one authoritative trigger per navigation
-- Composes `PolicyTableComponent`; will add filter panel in Phase 4
-- **Why a page shell**: Keeps routing concerns (title, guards) at page level; child components stay route-agnostic
+- State machine: `store.loading()` → skeleton | `store.error()` → error-state + retry | `store.total()===0` → empty-state | default → live dashboard
+- `@defer (on idle)` around the table section — filter + summary paint first; table defers until browser idle
+- `rowClick` → opens `PolicyDetailDialogComponent` via `MatDialog` (focus trap, ESC, `restoreFocus: true`)
+- `<main id="main-content">` — skip-link target; `aria-label` on landmark
+- **Why a page shell**: keeps routing concerns (title, guards) at page level; child components stay route-agnostic
 
 ### `features/policy-dashboard/store/PolicyStore`
 - `providedIn: 'root'` — one instance for the feature lifetime

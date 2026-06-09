@@ -1,6 +1,10 @@
-<!-- app.html — Application shell: top toolbar + routed page content -->
-<mat-toolbar class="app-toolbar" role="banner">
-  <span class="app-title">Chubb APAC Policy Hub</span>
+<!-- app.html — Application shell -->
+
+<!-- Skip navigation: first interactive element in DOM so keyboard/SR users can jump to content -->
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<mat-toolbar class="app-toolbar" role="banner" aria-label="Chubb APAC Policy Hub navigation">
+  <span class="app-title" aria-hidden="true">Chubb APAC Policy Hub</span>
   <span class="toolbar-spacer" aria-hidden="true"></span>
   <app-theme-picker />
 </mat-toolbar>
