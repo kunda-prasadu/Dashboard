@@ -116,6 +116,14 @@ Honest accounting of what we gave up for each architectural choice.
 
 ---
 
+## Observable Return from `flagSelectedPolicies()`
+
+**Gain:** Clean separation — store owns state, component owns UI feedback. No second channel (Subject, effect, BehaviorSubject) needed.  
+**Cost:** The caller is now responsible for subscribing and managing the subscription lifetime (via `takeUntilDestroyed`). Forgetting to subscribe means nothing happens — a silent bug.  
+**Mitigation:** Both `BulkActionBarComponent` subscriptions use `takeUntilDestroyed(this.destroyRef)`. Linting rules (no `subscribe` without destroy management) catch missing teardown.
+
+---
+
 ## Optimistic Updates without Confirmation
 
 **Gain:** Instant UI feedback — flagging a policy feels immediate.  

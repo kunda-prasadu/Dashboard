@@ -38,10 +38,14 @@ src/app/
         │   │   ├── policy-filter.component.ts   # Reactive filter bar — dual valueChanges subs, URL+storage sync
         │   │   ├── policy-filter.component.html # Search, multi-selects, date pickers, active-filter chips
         │   │   └── policy-filter.component.scss # Responsive grid layout, chip row
-        │   └── summary-panel/
-        │       ├── summary-panel.component.ts   # KPI panel — computed signals from store.summary()
-        │       ├── summary-panel.component.html # 4 status cards, GWP bars, SVG expiry arc
-        │       └── summary-panel.component.scss # Card colors, bar chart, arc animation (reduced-motion aware)
+        │   ├── summary-panel/
+        │   │   ├── summary-panel.component.ts   # KPI panel — computed signals from store.summary()
+        │   │   ├── summary-panel.component.html # 4 status cards, GWP bars, SVG expiry arc
+        │   │   └── summary-panel.component.scss # Card colors, bar chart, arc animation (reduced-motion aware)
+        │   └── bulk-action-bar/
+        │       ├── bulk-action-bar.component.ts   # Contextual toolbar — flag-for-review, retry, clear selection
+        │       ├── bulk-action-bar.component.html # Count badge, flag button, clear button
+        │       └── bulk-action-bar.component.scss # Slide-in animation, primary-container palette
         └── pages/
             └── policy-overview/
                 └── policy-overview.page.ts     # Routed shell — composes filter + table, bootstraps loadPolicies()
@@ -86,6 +90,15 @@ mock-api/
 - Emits `expiryClick()` for drilldown to active-expiring policies
 - **Why server-computed**: Aggregating over one page of table data would give wrong totals. The server applies the same filters to all 250 records.
 - **Why SVG arc**: Animatable without JavaScript, works on any background, respects system motion preferences via a single CSS media query
+
+### `features/policy-dashboard/components/BulkActionBarComponent`
+- **Visible only when `store.hasSelection()`** — rendered by `PolicyOverviewPage` via `@if`
+- **`flagForReview()`**: captures count → calls `store.flagSelectedPolicies()` → subscribes → shows plural-aware success snackbar or failure snackbar with a **Retry** action
+- **Retry**: calls `store.retryLastFailedFlag()` (restores the failed IDs as selection, re-attempts the PATCH batch)
+- Optimistic update + rollback lives in the **store**; snackbar lives in the **component** — one Observable, two concerns
+- `aria-live="polite"` on the selection count; `role="toolbar"` on the container; descriptive `aria-label` on each button
+- Slide-in CSS animation; `prefers-reduced-motion` disables it
+- **Why separate component**: keeps snackbar + retry logic out of `PolicyOverviewPage`; independently testable with a plain store stub
 
 ### `features/policy-dashboard/components/PolicyFilterComponent`
 - **Reactive form** with two `valueChanges` subscriptions:

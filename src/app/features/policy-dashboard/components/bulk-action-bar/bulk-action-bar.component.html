@@ -1,0 +1,51 @@
+<!--
+  bulk-action-bar.component.html
+
+  What: Contextual action bar rendered when 1 or more rows are selected.
+  Shows a live-updated count, "Flag for Review" action, and a clear button.
+
+  Accessibility notes:
+  - aria-live="polite" on the count so screen readers announce selection changes.
+  - aria-label on action buttons describes the effect, not just the icon.
+  - role="toolbar" groups the actions semantically.
+-->
+<div class="bulk-action-bar" role="toolbar" aria-label="Bulk actions for selected policies">
+
+  <span
+    class="selection-count"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <mat-icon aria-hidden="true">check_box</mat-icon>
+    <span>
+      {{ store.selectedCount() }}
+      {{ store.selectedCount() === 1 ? 'policy' : 'policies' }} selected
+    </span>
+  </span>
+
+  <div class="actions">
+    <button
+      mat-flat-button
+      color="primary"
+      class="flag-btn"
+      [disabled]="!store.hasSelection()"
+      aria-label="Flag selected policies for review"
+      matTooltip="Flag selected policies for review"
+      (click)="flagForReview()"
+    >
+      <mat-icon aria-hidden="true">flag</mat-icon>
+      Flag for Review
+    </button>
+
+    <button
+      mat-icon-button
+      class="clear-btn"
+      aria-label="Clear selection"
+      matTooltip="Clear selection"
+      (click)="clearSelection()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </div>
+
+</div>

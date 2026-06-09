@@ -153,7 +153,7 @@ describe('PolicyStore', () => {
     it('applies optimistic flag and confirms on success', () => {
       apiSpy.flagPolicies.and.returnValue(of([{ ...p1, flaggedForReview: true }]));
 
-      store.flagSelectedPolicies();
+      store.flagSelectedPolicies().subscribe();
 
       expect(store.policies().find(p => p.id === 'p1')?.flaggedForReview).toBeTrue();
       expect(store.selectedCount()).toBe(0);
@@ -162,7 +162,7 @@ describe('PolicyStore', () => {
     it('rolls back optimistic update on error', () => {
       apiSpy.flagPolicies.and.returnValue(throwError(() => makeError(500)));
 
-      store.flagSelectedPolicies();
+      store.flagSelectedPolicies().subscribe({ error: () => {} });
 
       expect(store.policies().find(p => p.id === 'p1')?.flaggedForReview).toBeFalse();
       expect(store.lastFailedFlagIds()).toEqual(['p1']);

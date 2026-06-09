@@ -81,3 +81,17 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Challenged:** Initial design had summary numbers computed from `store.policies()` (current page only). Corrected to `store.summary()` — a server aggregate. Page-level aggregation would show wrong totals when filters match more records than one page.
 
 **Why:** KPI accuracy requires the full filtered dataset, not one page. SVG with CSS animation is the minimal, zero-dependency approach for a single-metric arc indicator.
+
+---
+
+## Phase 6 — Bulk Actions
+
+**Accepted:** `BulkActionBarComponent` as a separate standalone component, not inlined in `PolicyOverviewPage`. Isolated snackbar + retry UX from the page shell; independently testable with a stub store.
+
+**Overrode:** Store's `flagSelectedPolicies()` originally returned `void` and subscribed internally. Changed to return `Observable<Policy[]>` piped with `tap` (state mutations) and `catchError` (rollback + `throwError`). The caller subscribes and handles UI feedback. This cleanly separates state management (store) from user feedback (component).
+
+**Challenged:** Initial spec used a pre-provided `MatSnackBar` spy. Standalone components host their own injector scope — the `MatSnackBarModule` from the component's `imports` shadowed the spy. Fixed by obtaining `MatSnackBar` via `fixture.debugElement.injector.get(MatSnackBar)` and calling `spyOn` on the actual instance.
+
+**Overrode:** Store stub used `computed()` signals in tests. Replaced with plain getter functions — they satisfy the same call signature (`store.selectedCount()`) without requiring an Angular injection context in spec scope.
+
+**Why:** Returning an Observable from `flagSelectedPolicies()` is the idiomatic RxJS pattern when the caller needs to react to completion. `void` forces coupling: either the store also shows UI, or the component needs a separate notification channel (a Subject, an effect) — both add complexity. One Observable, two concerns, clean interface.
