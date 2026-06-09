@@ -78,6 +78,38 @@ Each decision records **what** was chosen, **why**, and what was **rejected**.
 
 ---
 
+## 15. Two `valueChanges` Subscriptions in `PolicyFilterComponent`
+
+**Chosen:** Immediate subscription for chips snapshot + debounced subscription for API/storage/URL.
+**Rejected:** A single debounced subscription driving both chips and the API call.
+**Why:** If chips were debounced, they would lag 400 ms behind the user's selection — jarring UX. Splitting subscriptions gives instant chip feedback while protecting the API from excessive requests. Both subscriptions share the same `destroyRef` for clean teardown.
+
+---
+
+## 16. URL Query Param Sync for Filters
+
+**Chosen:** `router.navigate([], { queryParamsHandling: 'merge', replaceUrl: true })` after every debounced filter change.
+**Rejected:** Filters only in localStorage (not reflected in URL).
+**Why:** URL-persisted filters make views bookmarkable and shareable — a user can send a filtered URL to a colleague who sees the exact same result. `replaceUrl: true` prevents the browser history from filling with intermediate filter states.
+
+---
+
+## 17. Seed Priority: URL → localStorage → defaults
+
+**Chosen:** On component init, URL query params take highest priority, then localStorage, then empty defaults.
+**Rejected:** Always seed from localStorage regardless of URL.
+**Why:** When a user opens a shared link, the URL must override their local preferences to show the sender's exact filtered view. localStorage is a personal preference cache — it should only apply when no explicit URL context exists.
+
+---
+
+## 18. `StorageService` as SSR-safe `localStorage` Abstraction
+
+**Chosen:** A dedicated `StorageService` that checks `isPlatformBrowser` before every access.
+**Rejected:** Calling `localStorage` directly in store/component code.
+**Why:** The app has an SSR shell — `localStorage` is unavailable on the server and throws. A centralised service is also the only place that needs to change if the storage mechanism changes (e.g., `sessionStorage`, encrypted storage).
+
+---
+
 ## 10. Presentational Component Pattern for `PolicyTableComponent`
 
 **Chosen:** Component reads `PolicyStore` signals and emits `output()` events. No `HttpClient` injection.  

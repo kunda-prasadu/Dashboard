@@ -30,13 +30,17 @@ src/app/
         ├── store/
         │   └── policy.store.ts        # Signal store — single source of truth, optimistic updates
         ├── components/
-        │   └── policy-table/
-        │       ├── policy-table.component.ts   # Presentational table — reads store signals, emits rowClick
-        │       ├── policy-table.component.html # mat-table: 9 columns, sticky header/actions, empty state
-        │       └── policy-table.component.scss # Status/LOB badges, compact layout, Material tokens
+        │   ├── policy-table/
+        │   │   ├── policy-table.component.ts   # Presentational table — reads store signals, emits rowClick
+        │   │   ├── policy-table.component.html # mat-table: 9 columns, sticky header/actions, empty state
+        │   │   └── policy-table.component.scss # Status/LOB badges, compact layout, Material tokens
+        │   └── policy-filter/
+        │       ├── policy-filter.component.ts   # Reactive filter bar — dual valueChanges subs, URL+storage sync
+        │       ├── policy-filter.component.html # Search, multi-selects, date pickers, active-filter chips
+        │       └── policy-filter.component.scss # Responsive grid layout, chip row
         └── pages/
             └── policy-overview/
-                └── policy-overview.page.ts     # Routed shell — bootstraps store.loadPolicies() on init
+                └── policy-overview.page.ts     # Routed shell — composes filter + table, bootstraps loadPolicies()
 
 mock-api/
 ├── generate-data.js                   # Generates 250 APAC records with realistic distribution → db.json
@@ -64,6 +68,21 @@ mock-api/
 - `buildFilterParams()` is private and shared by `getAll()` and `getSummary()` — single source of param-building truth
 - `flagPolicies(ids[])` uses `forkJoin` to fire one `PATCH` per id in parallel
 - **Why**: Separation of concerns. The store orchestrates state; the service knows only the HTTP contract.
+
+### `core/services/StorageService`
+- SSR-safe wrapper around `localStorage` — checks `isPlatformBrowser` before accessing `window`
+- Catches storage errors silently (private browsing, quota exceeded)
+- **Why**: Centralised storage abstraction — swap backing store without touching callers; prevents SSR crashes
+
+### `features/policy-dashboard/components/PolicyFilterComponent`
+- **Reactive form** with two `valueChanges` subscriptions:
+  1. **Immediate** → updates `_snapshot` signal for instant chip UI feedback
+  2. **`debounceTime(400)` + `distinctUntilChanged`** → calls `store.updateFilters()`, persists to `StorageService`, syncs URL
+- **URL sync**: `router.navigate([], { queryParamsHandling: 'merge', replaceUrl: true })` — filters are bookmarkable/shareable
+- **Seed priority on init**: URL query params → localStorage → defaults (URL wins so shared links restore the sender's view)
+- Active-filter chips with individual `remove` and a "clear all" action
+- Accessibility: `role="search"`, `aria-label` on every control and chip button, `aria-live` on filter count
+- **Why two subscriptions**: Chips must update on every keystroke; API calls must be debounced. Splitting avoids async chip lag.
 
 ### `features/policy-dashboard/components/PolicyTableComponent`
 - **Standalone, `ChangeDetectionStrategy.OnPush`** — only re-renders when signal values change
