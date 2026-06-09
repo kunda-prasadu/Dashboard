@@ -1,8 +1,8 @@
 /**
  * PolicyOverviewPage
  *
- * What: Top-level routed shell for the policy dashboard. Composes the filter bar
- * and the policy table; bootstraps the store on init.
+ * What: Top-level routed shell for the policy dashboard. Composes the filter bar,
+ * summary panel, and policy table; bootstraps the store on init.
  *
  * Why a page/shell pattern: Keeps routing concerns (title, guard, resolver) at
  * the page level while child components stay presentational and testable without
@@ -16,17 +16,23 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { PolicyTableComponent } from '../../components/policy-table/policy-table.component';
 import { PolicyFilterComponent } from '../../components/policy-filter/policy-filter.component';
+import { SummaryPanelComponent } from '../../components/summary-panel/summary-panel.component';
 import { PolicyStore } from '../../store/policy.store';
+import { PolicyStatus } from '../../models/policy.model';
 
 @Component({
   selector: 'app-policy-overview',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PolicyTableComponent, PolicyFilterComponent],
+  imports: [PolicyTableComponent, PolicyFilterComponent, SummaryPanelComponent],
   template: `
     <main class="policy-overview-page">
       <h1 class="page-title">Policy Portfolio</h1>
       <app-policy-filter />
+      <app-summary-panel
+        (statusClick)="onStatusDrilldown($event)"
+        (expiryClick)="onExpiryDrilldown()"
+      />
       <app-policy-table (rowClick)="onRowClick($event)" />
     </main>
   `,
@@ -56,5 +62,18 @@ export class PolicyOverviewPage implements OnInit {
   onRowClick(id: string): void {
     // Navigation to detail page — Phase 5+
     console.info('[PolicyHub] View details:', id);
+  }
+
+  onStatusDrilldown(status: PolicyStatus): void {
+    // Apply status filter via store — filter panel chips will reflect it
+    const current = this.store.filters();
+    this.store.updateFilters({ ...current, statuses: [status] });
+  }
+
+  onExpiryDrilldown(): void {
+    // Filter to active policies expiring within 30 days
+    const today = new Date().toISOString().split('T')[0];
+    const in30  = new Date(Date.now() + 30 * 86_400_000).toISOString().split('T')[0];
+    this.store.updateFilters({ statuses: ['Active'], expiryDateFrom: today, expiryDateTo: in30 });
   }
 }

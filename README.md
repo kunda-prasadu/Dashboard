@@ -72,7 +72,8 @@ src/app/
         ├── store/             # PolicyStore — signal-based, single source of truth
         ├── components/
         │   ├── policy-table/   # Presentational table — server sort, controlled paginator, selection
-        │   └── policy-filter/  # Reactive filter bar — dual subs, URL+localStorage sync, chips
+        │   ├── policy-filter/  # Reactive filter bar — dual subs, URL+localStorage sync, chips
+        │   └── summary-panel/  # KPI panel — status cards, GWP bars, SVG expiry arc
         └── pages/
             └── policy-overview/ # Routed shell — composes filter + table, bootstraps store
 

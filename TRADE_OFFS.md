@@ -60,6 +60,22 @@ Honest accounting of what we gave up for each architectural choice.
 
 ---
 
+## SVG Arc (No Chart Library)
+
+**Gain:** Zero additional bundle weight; animatable via CSS; `prefers-reduced-motion` handled purely in CSS.
+**Cost:** Limited expressiveness — a full donut chart with labels, legends, and tooltips would require more SVG code or a library.
+**Mitigation:** The expiry arc is a single-metric indicator, not a full chart. It reads one number (`expiryFraction`) and displays it as a ring — SVG is the right tool at this scope.
+
+---
+
+## Server-Computed Summary (Extra HTTP Request per Load)
+
+**Gain:** KPI numbers are always correct over the full filtered set, regardless of which page is visible.
+**Cost:** Every `loadPolicies()` fires two requests in parallel (`/policies` + `/policies/summary`). On slow connections this doubles the network cost.
+**Mitigation:** `forkJoin` fires both in parallel so there is no additional latency — they complete in the time of whichever is slower. In production, summary results could be cached with a short TTL if needed.
+
+---
+
 ## Two `valueChanges` Subscriptions
 
 **Gain:** Instant chip feedback + debounced API calls — best of both UX and performance.
