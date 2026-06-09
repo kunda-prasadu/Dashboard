@@ -54,6 +54,19 @@ ng build
 ng test
 ```
 
+### Run tests with coverage report
+```bash
+ng test --no-watch --code-coverage
+```
+Coverage thresholds (Phase 9 baseline):
+
+| Metric     | Coverage |
+|------------|----------|
+| Statements | 94.88%   |
+| Branches   | 86.46%   |
+| Functions  | 92.30%   |
+| Lines      | 96.80%   |
+
 ---
 
 ## Project Structure

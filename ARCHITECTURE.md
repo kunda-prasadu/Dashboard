@@ -226,3 +226,31 @@ Custom Express ESM server (`mock-api/server.js`). Chosen over `json-server` beca
 - Express gives full control over filter logic and response shape
 
 `db.json` is gitignored. Regenerate with `npm run generate:mock`.
+
+---
+
+## Testing
+
+**Framework:** Jasmine + Karma with Angular testing utilities.
+
+**Coverage tooling:** Istanbul (via `ng test --code-coverage`). HTML reports are written to `coverage/`.
+
+**Strategy per layer:**
+
+| Layer | Approach |
+|---|---|
+| Services (API, Storage, Theme, Logger) | `HttpTestingController` for HTTP; stub dependencies via `useValue`; all error paths exercised |
+| Store (`PolicyStore`) | Spy on `PolicyApiService`; assert signal values after each mutating call; optimistic-update + rollback paths covered |
+| Components | Minimal store stub (plain functions/signals, no injection-context constraints); `MatSnackBar` spied via `fixture.debugElement.injector.get` to bypass standalone-component scoping |
+| Interceptor | `HttpTestingController`; exercises 4xx, 5xx, and network-error branches |
+
+**Zoneless note:** Every `TestBed` provides `provideZonelessChangeDetection()`. Zone.js is present in test polyfills only (Karma requires it), not in the app build.
+
+**Phase 9 coverage baseline (107 tests):**
+
+| Metric | Coverage |
+|---|---|
+| Statements | 94.88% |
+| Branches | **86.46%** |
+| Functions | 92.30% |
+| Lines | 96.80% |
