@@ -1,3 +1,16 @@
+/**
+ * LoggerService
+ *
+ * What: A thin wrapper around console.* that prefixes every message with [PolicyHub]
+ * and suppresses debug/info output in production builds.
+ *
+ * Why: Centralises log control so we can swap the implementation (e.g., send errors
+ * to a remote logging service) without touching every call site. Also prevents
+ * accidental verbose output reaching production users.
+ *
+ * SSR safety: Checks isPlatformBrowser before writing to console, because the
+ * server-side renderer runs in Node where certain console interactions may differ.
+ */
 import { inject, Injectable, isDevMode, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 

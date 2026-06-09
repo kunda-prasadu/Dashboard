@@ -1,3 +1,20 @@
+/**
+ * PolicyApiService
+ *
+ * What: Stateless HTTP client for the policy mock API. Exposes typed Observables
+ * for fetching, summarising, and patching policies.
+ *
+ * Why stateless: State lives entirely in PolicyStore. This service knows only the
+ * HTTP contract — URL structure, query parameters, and response shapes. Keeping it
+ * state-free makes it trivially testable with HttpTestingController and allows it
+ * to be reused if a second store or component ever needs raw API access.
+ *
+ * buildFilterParams() is private and shared by getAll() and getSummary() to ensure
+ * both endpoints always apply an identical filter transformation.
+ *
+ * flagPolicies(ids) uses forkJoin so all PATCH requests fire in parallel rather than
+ * sequentially — important when bulk-flagging many policies.
+ */
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { forkJoin, Observable } from 'rxjs';

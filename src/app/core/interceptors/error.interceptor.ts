@@ -1,3 +1,16 @@
+/**
+ * errorInterceptor (functional HTTP interceptor)
+ *
+ * What: Catches every HttpErrorResponse in the outbound HTTP chain and converts it
+ * into a NormalisedHttpError with a user-friendly message before re-throwing.
+ *
+ * Why: Components should never have to inspect raw HTTP status codes. By normalising
+ * here, every subscriber receives a consistent error shape and a message safe to
+ * display directly in the UI. 5xx internals are never leaked to the user.
+ *
+ * Registration: provideHttpClient(withFetch(), withInterceptors([errorInterceptor]))
+ * in app.config.ts — functional style, no class instantiation required.
+ */
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { throwError } from 'rxjs';

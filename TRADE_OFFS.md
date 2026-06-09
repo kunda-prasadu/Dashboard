@@ -1,16 +1,67 @@
 # Trade-offs
 
-## Zoneless + SSR
-SSR with zoneless requires careful handling of platform checks (`isPlatformBrowser`) because effects/signals may run on the server. Trade-off: more explicit code, but no hydration mismatch issues from zone timings.
+Honest accounting of what we gave up for each architectural choice.
+
+---
+
+## Zoneless + Karma Tests
+
+**Gain:** Explicit, predictable change detection in the app.  
+**Cost:** `zone.js` must stay in test polyfills (`angular.json`) so Karma's runner works. This triggers `NG0914` warnings in test output — cosmetic only. Every `TestBed` must include `provideZonelessChangeDetection()` manually; easy to forget.  
+**Mitigation:** Warning is suppressed in CI output by grep; `provideZonelessChangeDetection()` added to every spec as a pattern.
+
+---
 
 ## Custom Signal Store vs NgRx Signal Store
-NgRx Signal Store is more opinionated and has devtools. Our custom store is lighter but has no time-travel debugging. Acceptable for this scope; revisit if state complexity grows.
 
-## Express Mock API vs json-server
-json-server can't handle OR-based multi-field search correctly (ANDs `_like` params). Express gives full control over filter logic. Trade-off: more boilerplate, but correct behavior.
+**Gain:** Zero extra dependencies, ~¼ the code, native Angular.  
+**Cost:** No time-travel debugging, no Redux DevTools, no action log. Harder to audit state changes across a long session.  
+**Mitigation:** Acceptable at this scope. If the feature grows to 3+ slices with cross-feature state, NgRx Signal Store should be revisited.
 
-## No Client-Side Pagination Cache
-We fetch exactly one page at a time and do not cache adjacent pages. Trade-off: slightly more HTTP requests on back-navigation, but simpler state and guaranteed freshness.
+---
 
-## Material Icons Local Package
-The `material-icons` npm package includes the full icon font (~200 kB). An icon-subset approach would be smaller but adds build complexity. Acceptable at this stage.
+## Custom Express Server vs json-server
+
+**Gain:** Correct OR-search, full control over filter logic, `/summary` aggregation.  
+**Cost:** ~150 lines of boilerplate to maintain. Any schema change requires updating both `generate-data.js` and `server.js`.  
+**Mitigation:** Both files are small and co-located under `mock-api/`. Changes are mechanical.
+
+---
+
+## Server-Side Pagination (No Adjacent-Page Cache)
+
+**Gain:** Simple state (`_policies` holds one page), guaranteed data freshness.  
+**Cost:** Every back-navigation fires a new HTTP request. No instant page-flip like a pre-fetched cache would give.  
+**Mitigation:** Requests hit a local mock server — latency is negligible in dev. In production, a sliding window cache could be added to `PolicyStore` without changing the API contract.
+
+---
+
+## String Unions vs Enums
+
+**Gain:** Zero runtime overhead, tree-shakeable, template-friendly.  
+**Cost:** No runtime narrowing helper (e.g., `PolicyStatus[value]` lookup). Typos in string literals are caught only at compile time.  
+**Mitigation:** TypeScript strict mode catches all mismatches at compile time. Constants arrays (`POLICY_STATUSES`) provide the runtime list when needed.
+
+---
+
+## `forkJoin` for Page + Summary
+
+**Gain:** Both requests fire in parallel — faster perceived load.  
+**Cost:** If either request fails, `forkJoin` cancels both and emits the error. A partial success (page loaded but summary failed) is not possible.  
+**Mitigation:** The error interceptor normalises the error and the store sets a user-friendly message. Both endpoints are served by the same Express process, so simultaneous failure is rare. In production, `combineLatest` with error isolation per stream would be the upgrade path.
+
+---
+
+## Material Icons Local Package (~200 kB CSS)
+
+**Gain:** No CDN dependency, works offline, no CORS risk.  
+**Cost:** Full icon font added to styles bundle even if only a fraction of icons are used.  
+**Mitigation:** Acceptable for a dashboard application. Icon subsetting via a build plugin (e.g., `fontmin`) is the production upgrade path.
+
+---
+
+## Optimistic Updates without Confirmation
+
+**Gain:** Instant UI feedback — flagging a policy feels immediate.  
+**Cost:** On network error, the UI shows a brief flash of the optimistic state before rollback. Users may find this jarring.  
+**Mitigation:** Rollback is synchronous (signal update) so the flash is sub-frame. A toast notification on rollback tells the user what happened. `_lastFailedFlagIds` is exposed so the UI can highlight the affected rows.

@@ -1,3 +1,16 @@
+/**
+ * Policy domain constants.
+ *
+ * What: Single source of truth for all domain lookup values used in filters,
+ * dropdowns, and chip lists across the dashboard.
+ *
+ * Why `as const` + typed arrays: Gives both compile-time exhaustiveness checks
+ * (TypeScript narrows the element type) and runtime iteration (for rendering
+ * filter chips). Using `readonly` arrays prevents accidental mutation.
+ *
+ * STORAGE_KEYS: Namespaced localStorage keys to avoid collisions with other apps
+ * on the same origin. All prefixed with 'policy-hub:'.
+ */
 import type { Currency, LineOfBusiness, PolicyStatus, Region } from '../models/policy.model';
 
 export const POLICY_STATUSES: readonly PolicyStatus[] = [
