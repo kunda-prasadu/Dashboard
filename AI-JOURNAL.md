@@ -39,3 +39,17 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Challenged:** Signal store `loadPolicies()` initially re-fetched page + summary in sequence. Switched to `forkJoin({ page, summary })` so both requests fire in parallel — halves the perceived load time.
 
 **Why:** `takeUntilDestroyed` without `DestroyRef` silently breaks in method scope; zoneless testing requires both zone.js (runner infra) and `provideZonelessChangeDetection()` (Angular CD).
+
+---
+
+## Phase 3 — Policy Table
+
+**Accepted:** Presentational component pattern — `PolicyTableComponent` reads store signals and emits output events only; no HTTP dependency in the component.
+
+**Overrode:** AI placed `[trackBy]` on the `*matRowDef` row element. `trackBy` must be set on `<table mat-table>` directly — the row def binding does not accept it. Moved to the table element.
+
+**Overrode:** AI defaulted to `MatTableDataSource` for the paginator. Brief requires server-side pagination: `MatTableDataSource` paginates client-side and would silently break the requirement. Used a controlled paginator bound to `store.total()` / `store.pagination()` instead.
+
+**Challenged:** Initial `formatPremium` specs used `1,250,000 SGD` → expected `'S$1.2M'`. Two issues: `getCurrencySymbol('SGD', 'narrow')` returns `'$'` in the test runner's locale (en-US), and `1.25.toFixed(1)` rounds to `'1.3'` in V8. Fixed tests to use unambiguous values (exact multiples, USD) to avoid locale + floating-point rounding edge cases.
+
+**Why:** Controlled paginator is mandatory for server-side pagination; spec values must not rely on locale-specific currency symbol rendering.

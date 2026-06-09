@@ -1,0 +1,136 @@
+<section
+  role="region"
+  aria-label="Policy portfolio table"
+  class="policy-table-container"
+>
+  <div class="table-scroll-wrapper">
+    <table
+      mat-table
+      [dataSource]="store.policies()"
+      [trackBy]="trackById"
+      matSort
+      [matSortActive]="store.sort().field"
+      [matSortDirection]="store.sort().order"
+      (matSortChange)="onSortChange($event)"
+      class="policy-table"
+    >
+
+      <!-- SELECT column -->
+      <ng-container matColumnDef="select" sticky>
+        <th mat-header-cell *matHeaderCellDef scope="col">
+          <mat-checkbox
+            [checked]="allSelected()"
+            [indeterminate]="someSelected()"
+            (change)="onToggleSelectAll()"
+            aria-label="Select or deselect all policies on this page"
+          />
+        </th>
+        <td mat-cell *matCellDef="let policy">
+          <mat-checkbox
+            [checked]="store.selectedIds().has(policy.id)"
+            (change)="onToggleRow(policy.id)"
+            [attr.aria-label]="'Select policy ' + policy.policyNumber"
+          />
+        </td>
+      </ng-container>
+
+      <!-- POLICY NUMBER column -->
+      <ng-container matColumnDef="policyNumber">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header scope="col">Policy No.</th>
+        <td mat-cell *matCellDef="let policy" class="mono">{{ policy.policyNumber }}</td>
+      </ng-container>
+
+      <!-- POLICY HOLDER column -->
+      <ng-container matColumnDef="policyHolderName">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header scope="col">Policy Holder</th>
+        <td mat-cell *matCellDef="let policy">{{ policy.policyHolderName }}</td>
+      </ng-container>
+
+      <!-- LINE OF BUSINESS column -->
+      <ng-container matColumnDef="lineOfBusiness">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header scope="col">LOB</th>
+        <td mat-cell *matCellDef="let policy">
+          <span [class]="lobClass(policy.lineOfBusiness)">{{ policy.lineOfBusiness }}</span>
+        </td>
+      </ng-container>
+
+      <!-- STATUS column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header scope="col">Status</th>
+        <td mat-cell *matCellDef="let policy">
+          <span [class]="statusClass(policy.status)">{{ policy.status }}</span>
+        </td>
+      </ng-container>
+
+      <!-- REGION column -->
+      <ng-container matColumnDef="region">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header scope="col">Region</th>
+        <td mat-cell *matCellDef="let policy">{{ policy.region }}</td>
+      </ng-container>
+
+      <!-- PREMIUM column -->
+      <ng-container matColumnDef="premium">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="premiumAmount" scope="col">
+          Premium
+        </th>
+        <td mat-cell *matCellDef="let policy" class="premium-cell">
+          {{ formatPremium(policy.premiumAmount, policy.currency) }}
+        </td>
+      </ng-container>
+
+      <!-- FLAGGED column -->
+      <ng-container matColumnDef="flagged">
+        <th mat-header-cell *matHeaderCellDef scope="col" aria-label="Flagged for review"></th>
+        <td mat-cell *matCellDef="let policy">
+          @if (policy.flaggedForReview) {
+            <mat-icon
+              class="flag-icon"
+              aria-label="Flagged for review"
+              matTooltip="Flagged for review"
+            >flag</mat-icon>
+          }
+        </td>
+      </ng-container>
+
+      <!-- ACTIONS column -->
+      <ng-container matColumnDef="actions" stickyEnd>
+        <th mat-header-cell *matHeaderCellDef scope="col" aria-label="Actions"></th>
+        <td mat-cell *matCellDef="let policy">
+          <button
+            mat-icon-button
+            (click)="onViewDetails(policy.id)"
+            [attr.aria-label]="'View details for ' + policy.policyNumber"
+            matTooltip="View details"
+          >
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- EMPTY state row -->
+      <tr class="no-data-row" *matNoDataRow>
+        <td [attr.colspan]="displayedColumns.length" class="no-data-cell">
+          <mat-icon>search_off</mat-icon>
+          <span>No policies match the current filters.</span>
+        </td>
+      </tr>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr
+        mat-row
+        *matRowDef="let policy; columns: displayedColumns"
+        [class.selected-row]="store.selectedIds().has(policy.id)"
+      ></tr>
+    </table>
+  </div>
+
+  <mat-paginator
+    [length]="store.total()"
+    [pageIndex]="store.pagination().pageIndex"
+    [pageSize]="store.pagination().pageSize"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+    aria-label="Policy table paginator"
+    showFirstLastButtons
+  />
+</section>
