@@ -70,6 +70,33 @@ Each decision records **what** was chosen, **why**, and what was **rejected**.
 
 ---
 
+## 24. CSS Custom Properties for Design Tokens (Not Sass Variables)
+
+**Chosen:** All colour, spacing, shadow, radius, and typography tokens as CSS custom properties in `:root` and `html.dark-theme`.  
+**Rejected:** Sass variables; Angular Material theming-only; separate stylesheet per theme.  
+**Why:**
+- Runtime-swappable: one class toggle on `<html>` re-scopes every token without a rebuild.
+- Inherited by all elements — components reference `var(--ph-*)` without importing anything.
+- Works alongside Material 3 `--mat-sys-*` tokens; we extend, not replace, the Material layer.
+
+---
+
+## 25. `ThemeService` Signal + `effect()` for DOM Mutation
+
+**Chosen:** `isDark = signal<boolean>()`, `effect(() => document.documentElement.classList.toggle('dark-theme', isDark()))`.  
+**Rejected:** Directly calling `classList.toggle` inside `setDark()`; using a BehaviorSubject; writing a `document.documentElement.setAttribute('class', ...)` in the constructor.  
+**Why:** The `effect()` is Angular's declared mechanism for reacting to signal changes with side-effects. It runs synchronously on the same tick as the signal write, handles SSR safety, and keeps `setDark()` pure (signal mutation only).
+
+---
+
+## 26. StorageService as the Sole `localStorage` Gateway
+
+**Chosen:** All `localStorage` access goes through `StorageService`. Enforced by a grep rule.  
+**Rejected:** Direct `localStorage.*` calls anywhere else in the codebase.  
+**Why:** `localStorage` throws in SSR and in private-browsing mode. A centralised service handles both cases once; callers never need defensive try/catch. The grep rule (`grep localStorage src/ --include=*.ts | grep -v storage.service`) verifies the contract at any time.
+
+---
+
 ## 22. `flagSelectedPolicies()` Returns `Observable<Policy[]>`
 
 **Chosen:** Store method returns a piped Observable (tap + catchError + throwError). Caller subscribes and handles snackbar feedback.  

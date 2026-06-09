@@ -95,3 +95,21 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Overrode:** Store stub used `computed()` signals in tests. Replaced with plain getter functions — they satisfy the same call signature (`store.selectedCount()`) without requiring an Angular injection context in spec scope.
 
 **Why:** Returning an Observable from `flagSelectedPolicies()` is the idiomatic RxJS pattern when the caller needs to react to completion. `void` forces coupling: either the store also shows UI, or the component needs a separate notification channel (a Subject, an effect) — both add complexity. One Observable, two concerns, clean interface.
+
+---
+
+## Phase 7 — Theming + Storage Abstraction
+
+**Accepted:** CSS custom properties for design tokens (not Sass variables). Runtime-swappable; a single class toggle on `<html>` re-scopes every token without a rebuild or a JS loop over elements.
+
+**Accepted:** `ThemeService.isDark` as a `signal<boolean>`. An Angular `effect()` mirrors the signal onto `html.dark-theme` — clean unidirectional data flow; no direct DOM imperative calls outside the effect.
+
+**Accepted:** Init priority: stored value → `prefers-color-scheme` → light. Stored value wins so explicit user choices survive page loads; system preference applies only on first visit.
+
+**Overrode:** `PolicyStore` had two raw `localStorage` calls (`storedPageSize()` and `setPage()`). Migrated both to `StorageService`. The rule "StorageService is the only caller of localStorage" is now enforced by grep — confirmed zero violations post-migration.
+
+**Challenged:** `storedPageSize()` was a module-level standalone function that called `localStorage` directly. Inlining it as a field-initialiser IIFE (`(() => { ... })()`) using `this.storage` keeps the logic at the same point without a separate top-level function.
+
+**Overrode:** Default `app.html` Angular scaffold (Angular logo + links). Replaced with a Material toolbar containing the product name and `ThemePickerComponent`. Updated `app.spec.ts` to assert on `.app-title` text instead of the removed `<h1>`.
+
+**Why:** WCAG AA contrast targets (≥4.5:1) are met by choosing token values analytically at authoring time — not left to browser heuristics. Both light and dark palettes are documented with computed contrast ratios in styles.scss comments.
