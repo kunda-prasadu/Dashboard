@@ -71,9 +71,10 @@ src/app/
         ├── services/          # PolicyApiService — HTTP, no state
         ├── store/             # PolicyStore — signal-based, single source of truth
         ├── components/
-        │   └── policy-table/  # Presentational table — server sort, controlled paginator, selection
+        │   ├── policy-table/   # Presentational table — server sort, controlled paginator, selection
+        │   └── policy-filter/  # Reactive filter bar — dual subs, URL+localStorage sync, chips
         └── pages/
-            └── policy-overview/ # Routed shell — bootstraps store, composes components
+            └── policy-overview/ # Routed shell — composes filter + table, bootstraps store
 
 mock-api/
 ├── generate-data.js      # Generates 250 APAC policy records → db.json

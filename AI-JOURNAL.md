@@ -53,3 +53,17 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 **Challenged:** Initial `formatPremium` specs used `1,250,000 SGD` → expected `'S$1.2M'`. Two issues: `getCurrencySymbol('SGD', 'narrow')` returns `'$'` in the test runner's locale (en-US), and `1.25.toFixed(1)` rounds to `'1.3'` in V8. Fixed tests to use unambiguous values (exact multiples, USD) to avoid locale + floating-point rounding edge cases.
 
 **Why:** Controlled paginator is mandatory for server-side pagination; spec values must not rely on locale-specific currency symbol rendering.
+
+---
+
+## Phase 4 — Filters + Free-Text Search
+
+**Overrode (again):** `takeUntilDestroyed()` called without `DestroyRef` in `ngOnInit()`. Same fix as Phase 2 — injected `DestroyRef` and passed it explicitly to both `valueChanges` subscriptions.
+
+**Accepted:** Dual `valueChanges` subscription pattern — immediate for chips snapshot, debounced for API/storage/URL. Clean separation of UI responsiveness vs network efficiency.
+
+**Accepted:** Seed priority URL → localStorage → defaults. URL wins so shared links restore the sender's exact filtered view.
+
+**Challenged:** Initially used a single debounced subscription for both chips and the API. Chips lagged 400 ms — visibly jarring. Split into two subscriptions to give instant chip feedback without extra API calls.
+
+**Why:** `takeUntilDestroyed` without `DestroyRef` throws `NG0203` at runtime in method scope. Two subscriptions with different timing characteristics are the correct tool for two different responsiveness requirements.

@@ -60,6 +60,22 @@ Honest accounting of what we gave up for each architectural choice.
 
 ---
 
+## Two `valueChanges` Subscriptions
+
+**Gain:** Instant chip feedback + debounced API calls — best of both UX and performance.
+**Cost:** Two subscriptions to manage and tear down instead of one. Slightly more code surface.
+**Mitigation:** Both use `takeUntilDestroyed(destroyRef)` — teardown is automatic and identical.
+
+---
+
+## URL Filter Persistence (`replaceUrl: true`)
+
+**Gain:** Filters are bookmarkable and shareable.
+**Cost:** Every filter change triggers a router navigation (even debounced, this is ~2.5 navigations/second at minimum). For very rapid filtering this could cause minor flicker in the address bar.
+**Mitigation:** `replaceUrl: true` means no history entries are added — the back button always goes to the previous page, not a previous filter state. Debounce at 400 ms limits the navigation rate to at most 2.5/second.
+
+---
+
 ## Controlled Paginator vs `MatTableDataSource`
 
 **Gain:** True server-side pagination — each page change hits the API; `store.total()` drives the paginator length.  
