@@ -1,20 +1,6 @@
-<!--
-  policy-filter.component.html
-
-  What: Filter bar with free-text search and multi-select controls for
-  status, LOB, region, date ranges and premium min. Active filters render
-  as dismissible chips below the controls.
-
-  Why two-row layout: The search box is the primary interaction — it sits alone
-  in row 1 for prominence. Row 2 holds the auxiliary multi-select filters.
-  On narrow viewports both rows stack vertically.
-
-  All filtering is SERVER-SIDE — this form only collects values and passes them
-  to store.updateFilters(). No local array manipulation happens here.
--->
 <section role="search" aria-label="Policy filters" class="filter-container" [formGroup]="form">
 
-  <!-- Row 1: Search -->
+  <!-- Search + All Filters button -->
   <div class="filter-row search-row">
     <mat-form-field appearance="outline" class="search-field">
       <mat-label>Search by policy number, holder or underwriter</mat-label>
@@ -34,96 +20,31 @@
       }
     </mat-form-field>
 
-    <!-- Active filter count badge + Clear all -->
     <div class="filter-actions">
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="openFilters()"
+        aria-label="Open all filters panel"
+        class="all-filters-btn"
+        [class.active]="hasActiveFilters()"
+      >
+        <mat-icon>tune</mat-icon>
+        All Filters
+        @if (activeFilterCount() > 0) {
+          <span class="filter-badge">{{ activeFilterCount() }}</span>
+        }
+      </button>
+
       @if (hasActiveFilters()) {
-        <span class="filter-count-badge" aria-live="polite" aria-atomic="true">
-          {{ activeFilterCount() }} filter{{ activeFilterCount() === 1 ? '' : 's' }} active
-        </span>
-        <button mat-stroked-button
+        <button mat-icon-button
           (click)="clearAll()"
-          aria-label="Clear all active filters">
+          aria-label="Clear all active filters"
+          matTooltip="Clear all filters">
           <mat-icon>filter_list_off</mat-icon>
-          Clear all
         </button>
       }
     </div>
-  </div>
-
-  <!-- Row 2: Multi-select filters -->
-  <div class="filter-row selects-row">
-
-    <mat-form-field appearance="outline">
-      <mat-label>Status</mat-label>
-      <mat-select formControlName="statuses" multiple aria-label="Filter by policy status">
-        @for (s of statuses; track s) {
-          <mat-option [value]="s">{{ s }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Line of Business</mat-label>
-      <mat-select formControlName="linesOfBusiness" multiple aria-label="Filter by line of business">
-        @for (l of linesOfBusiness; track l) {
-          <mat-option [value]="l">{{ l }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Region</mat-label>
-      <mat-select formControlName="regions" multiple aria-label="Filter by region">
-        @for (r of regions; track r) {
-          <mat-option [value]="r">{{ r }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="premium-field">
-      <mat-label>Min premium</mat-label>
-      <input matInput type="number" formControlName="premiumMin"
-        aria-label="Minimum premium amount" min="0" />
-      <span matTextPrefix>$&nbsp;</span>
-    </mat-form-field>
-
-  </div>
-
-  <!-- Row 3: Date ranges -->
-  <div class="filter-row dates-row">
-
-    <mat-form-field appearance="outline">
-      <mat-label>Effective from</mat-label>
-      <input matInput [matDatepicker]="effFrom" formControlName="effectiveDateFrom"
-        aria-label="Effective date from" />
-      <mat-datepicker-toggle matIconSuffix [for]="effFrom" />
-      <mat-datepicker #effFrom />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Effective to</mat-label>
-      <input matInput [matDatepicker]="effTo" formControlName="effectiveDateTo"
-        aria-label="Effective date to" />
-      <mat-datepicker-toggle matIconSuffix [for]="effTo" />
-      <mat-datepicker #effTo />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Expiry from</mat-label>
-      <input matInput [matDatepicker]="expFrom" formControlName="expiryDateFrom"
-        aria-label="Expiry date from" />
-      <mat-datepicker-toggle matIconSuffix [for]="expFrom" />
-      <mat-datepicker #expFrom />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Expiry to</mat-label>
-      <input matInput [matDatepicker]="expTo" formControlName="expiryDateTo"
-        aria-label="Expiry date to" />
-      <mat-datepicker-toggle matIconSuffix [for]="expTo" />
-      <mat-datepicker #expTo />
-    </mat-form-field>
-
   </div>
 
   <!-- Active filter chips -->

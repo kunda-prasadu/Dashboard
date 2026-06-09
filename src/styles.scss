@@ -205,3 +205,14 @@ a:focus-visible,
   background: #c0392b !important;
   color: #fff !important;
 }
+
+// ── Filter bottom sheet ───────────────────────────────────────────────────────
+
+.filter-bottom-sheet-panel .mat-bottom-sheet-container {
+  border-radius: 16px 16px 0 0 !important;
+  padding: 0 !important;
+  max-height: 85vh;
+  width: 80vw;
+  max-width: 80vw;
+  margin: 0 auto;
+}

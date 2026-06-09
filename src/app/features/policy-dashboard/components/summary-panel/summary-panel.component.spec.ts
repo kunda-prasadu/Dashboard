@@ -94,6 +94,37 @@ describe('SummaryPanelComponent', () => {
     });
   });
 
+  describe('expiryPct()', () => {
+    it('returns 0 when active count is 0', async () => {
+      await setup(makeSummary({ active: 0, expiringWithin30Days: 0 }));
+      expect(component.expiryPct()).toBe(0);
+    });
+
+    it('returns rounded percentage of expiring over active', async () => {
+      await setup(makeSummary({ active: 200, expiringWithin30Days: 50 }));
+      expect(component.expiryPct()).toBe(25);
+    });
+
+    it('clamps to 100 when expiringWithin30Days exceeds active', async () => {
+      await setup(makeSummary({ active: 5, expiringWithin30Days: 10 }));
+      expect(component.expiryPct()).toBe(100);
+    });
+  });
+
+  describe('lobBarClass()', () => {
+    it('returns correct class for standard LOBs', async () => {
+      await setup();
+      expect(component.lobBarClass('Property')).toBe('bar-fill bar-property');
+      expect(component.lobBarClass('Casualty')).toBe('bar-fill bar-casualty');
+      expect(component.lobBarClass('Marine')).toBe('bar-fill bar-marine');
+    });
+
+    it('strips special characters from A&H', async () => {
+      await setup();
+      expect(component.lobBarClass('A&H')).toBe('bar-fill bar-ah');
+    });
+  });
+
   describe('GWP by LOB bars', () => {
     it('returns empty array when gwpByLob is empty', async () => {
       await setup(makeSummary({ gwpByLob: {} }));
@@ -112,6 +143,13 @@ describe('SummaryPanelComponent', () => {
       await setup(makeSummary({ gwpByLob: { Property: 1000, Marine: 500 } }));
       const largest = component.lobEntries()[0];
       expect(largest.widthPct).toBe(100);
+    });
+
+    it('calculates pct as percentage of total', async () => {
+      await setup(makeSummary({ gwpByLob: { Property: 750, Marine: 250 } }));
+      const entries = component.lobEntries();
+      expect(entries[0].pct).toBe(75);
+      expect(entries[1].pct).toBe(25);
     });
 
     it('calculates proportional widthPct for smaller bars', async () => {

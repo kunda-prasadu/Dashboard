@@ -1,0 +1,111 @@
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 0;
+  border-left: 4px solid transparent;
+  margin-left: -24px;
+  padding-left: 20px;
+
+  h2[mat-dialog-title] {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+.count-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 100px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dialog-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.dialog-body {
+  padding: 16px 0 0 !important;
+  max-height: 60vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.state-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.9rem;
+
+  mat-icon { font-size: 40px; width: 40px; height: 40px; opacity: 0.5; }
+  &.error { color: var(--mat-sys-error); mat-icon { opacity: 1; } }
+}
+
+.table-wrap {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drilldown-table {
+  width: 100%;
+  table-layout: fixed;
+
+  .mat-mdc-header-row {
+    background: var(--mat-sys-surface-container-low);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .mat-mdc-row:hover {
+    background: var(--mat-sys-surface-container-lowest);
+  }
+}
+
+// Column widths
+.mat-column-policyNumber    { width: 140px; }
+.mat-column-policyHolderName{ width: auto; }
+.mat-column-lineOfBusiness  { width: 100px; }
+.mat-column-region          { width: 110px; }
+.mat-column-premium         { width: 110px; }
+.mat-column-expiryDate      { width: 120px; }
+
+.mono {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.8rem;
+}
+
+.right-align {
+  text-align: right;
+}
+
+.lob-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+
+  &.lob-property { background: #e3f2fd; color: #0d47a1; }
+  &.lob-casualty { background: #e8eaf6; color: #283593; }
+  &.lob-ah,
+  &.lob-ah       { background: #e0f2f1; color: #004d40; }
+  &.lob-marine   { background: #e1f5fe; color: #01579b; }
+}

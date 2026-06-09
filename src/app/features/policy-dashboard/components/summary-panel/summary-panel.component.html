@@ -1,65 +1,83 @@
-<!--
-  summary-panel.component.html
-
-  What: KPI dashboard panel — 4 status cards, GWP-by-LOB bars, expiry arc,
-  and total premium. All values come from store.summary() which the server
-  computes over the current filtered set.
-
-  Accessibility notes:
-  - Each status card has role="button" + aria-label with the count embedded.
-  - Color is never the sole signal: each card has an icon + text label + color.
-  - The SVG arc has aria-label and aria-valuenow/min/max for screen readers.
-  - prefers-reduced-motion: arc transition is disabled via CSS media query.
--->
-
 <section class="summary-panel" aria-label="Portfolio summary statistics">
 
-  <!-- Status count cards -->
-  <div class="status-cards" role="list">
-    @for (card of statusCards; track card.status) {
-      <div
-        class="status-card"
-        [class]="card.colorClass"
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="countFor(card.status) + ' ' + card.label + '. Click to filter by ' + card.status"
-        (click)="onStatusClick(card.status)"
-        (keydown.enter)="onStatusClick(card.status)"
-        (keydown.space)="onStatusClick(card.status)"
-      >
-        <mat-icon class="card-icon" aria-hidden="true">{{ card.icon }}</mat-icon>
-        <span class="card-count">{{ countFor(card.status) | number }}</span>
-        <span class="card-label">{{ card.status }}</span>
-      </div>
-    }
+  <!-- POLICY STATUS section -->
+  <div class="section-header">
+    <span class="section-label">POLICY STATUS</span>
   </div>
 
-  <mat-divider />
+  <ul class="status-cards" role="list">
+    @for (card of statusCards; track card.status) {
+      <li style="display: contents">
+        <button
+          class="status-card {{ card.colorClass }}"
+          type="button"
+          [attr.aria-label]="countFor(card.status) + ' ' + card.label + '. Click to filter by ' + card.status + ' status'"
+          (click)="onStatusClick(card.status)"
+        >
+          <span class="card-badge {{ card.colorClass }}-badge" aria-hidden="true">
+            <mat-icon>{{ card.icon }}</mat-icon>
+          </span>
+          <span class="card-body">
+            <span class="card-count">{{ countFor(card.status) | number }}</span>
+            <span class="card-label">{{ card.label }}</span>
+            <span class="card-desc">{{ card.description }}</span>
+          </span>
+        </button>
+      </li>
+    }
+  </ul>
 
-  <!-- Bottom row: Total premium + GWP bars + Expiry arc -->
-  <div class="bottom-row">
+  <!-- KEY METRICS section -->
+  <div class="section-header">
+    <span class="section-label">KEY METRICS</span>
+  </div>
 
-    <!-- GWP by LOB bar chart -->
+  <div class="metrics-row">
+
+    <!-- Expiry card -->
+    <button
+      class="expiry-card"
+      type="button"
+      (click)="onExpiryClick()"
+      [attr.aria-label]="store.summary().expiringWithin30Days + ' active policies expiring within 30 days. Click to view.'"
+      matTooltip="View expiring policies"
+    >
+      <span class="expiry-header">
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        <span>Expiring in 30 Days</span>
+      </span>
+      <span class="expiry-count">{{ store.summary().expiringWithin30Days }}</span>
+      <span class="expiry-sub">of {{ store.summary().active }} active ({{ expiryPct() }}%)</span>
+      <span class="expiry-bar-track" role="presentation">
+        <span class="expiry-bar-fill" [style.width.%]="expiryPct()"></span>
+      </span>
+    </button>
+
+    <!-- GWP by LOB -->
     <div class="gwp-section" aria-label="Gross written premium by line of business">
-      <p class="section-title">
-        <mat-icon aria-hidden="true">bar_chart</mat-icon>
-        GWP by Line of Business
-      </p>
-      <div class="total-premium">
-        Total:
-        <strong>{{ store.summary().totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>
+      <div class="gwp-header">
+        <span class="gwp-title">
+          <mat-icon aria-hidden="true">bar_chart</mat-icon>
+          GWP by Line of Business
+        </span>
+        <span class="gwp-total">
+          {{ store.summary().totalPremium | currency:'USD':'symbol':'1.0-0' }}
+        </span>
       </div>
       <div class="lob-bars">
         @for (entry of lobEntries(); track entry.lob) {
-          <div class="lob-row" [attr.aria-label]="entry.label + ': ' + (entry.amount | currency:'USD':'symbol':'1.0-0')">
+          <div
+            class="lob-row"
+            [attr.aria-label]="entry.label + ': ' + (entry.amount | currency:'USD':'symbol':'1.0-0') + ' (' + entry.pct + '%)'"
+          >
+            <span class="lob-icon-wrap">
+              <mat-icon aria-hidden="true">{{ entry.icon }}</mat-icon>
+            </span>
             <span class="lob-label">{{ entry.label }}</span>
-            <div class="bar-track" role="presentation">
-              <div
-                class="bar-fill"
-                [class]="'bar-' + entry.lob.toLowerCase().replace('&','').trim()"
-                [style.width.%]="entry.widthPct"
-              ></div>
-            </div>
+            <span class="bar-track" role="presentation">
+              <span [class]="lobBarClass(entry.lob)" [style.width.%]="entry.widthPct"></span>
+            </span>
+            <span class="lob-pct">{{ entry.pct }}%</span>
             <span class="lob-amount">{{ entry.amount | currency:'USD':'symbol':'1.0-0' }}</span>
           </div>
         }
@@ -69,56 +87,6 @@
       </div>
     </div>
 
-    <!-- Expiring within 30 days — SVG arc -->
-    <div class="expiry-section">
-      <p class="section-title">
-        <mat-icon aria-hidden="true">schedule</mat-icon>
-        Expiring in 30 Days
-      </p>
-      <button
-        class="arc-button"
-        (click)="onExpiryClick()"
-        [attr.aria-label]="store.summary().expiringWithin30Days + ' active policies expiring within 30 days. Click to view.'"
-        matTooltip="View expiring policies"
-      >
-        <svg
-          class="arc-svg"
-          viewBox="0 0 100 100"
-          width="120"
-          height="120"
-          role="img"
-          [attr.aria-label]="store.summary().expiringWithin30Days + ' of ' + store.summary().active + ' active policies expiring soon'"
-        >
-          <!-- Background track -->
-          <circle
-            cx="50" cy="50"
-            [attr.r]="44"
-            class="arc-track"
-            fill="none"
-            stroke-width="10"
-          />
-          <!-- Filled arc — rotated -90deg so it starts at the top -->
-          <circle
-            cx="50" cy="50"
-            [attr.r]="44"
-            class="arc-fill"
-            fill="none"
-            stroke-width="10"
-            stroke-linecap="round"
-            [attr.stroke-dasharray]="arcCircumference"
-            [attr.stroke-dashoffset]="arcOffset()"
-            transform="rotate(-90 50 50)"
-            [attr.aria-valuenow]="store.summary().expiringWithin30Days"
-            aria-valuemin="0"
-            [attr.aria-valuemax]="store.summary().active"
-          />
-        </svg>
-        <div class="arc-label">
-          <span class="arc-count">{{ store.summary().expiringWithin30Days }}</span>
-          <span class="arc-sub">of {{ store.summary().active }} active</span>
-        </div>
-      </button>
-    </div>
-
   </div>
+
 </section>

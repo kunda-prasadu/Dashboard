@@ -1,0 +1,131 @@
+<div class="sheet-container" [formGroup]="form">
+
+  <!-- Handle bar -->
+  <div class="sheet-handle" role="presentation"></div>
+
+  <!-- Header -->
+  <div class="sheet-header">
+    <h2 class="sheet-title">
+      <mat-icon aria-hidden="true">tune</mat-icon>
+      All Filters
+    </h2>
+    <button mat-icon-button (click)="apply()" aria-label="Close filters panel">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-divider />
+
+  <!-- Filter content -->
+  <div class="sheet-body">
+
+    <!-- Status -->
+    <div class="filter-section">
+      <p class="section-label">Status</p>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Select status</mat-label>
+        <mat-select formControlName="statuses" multiple aria-label="Filter by policy status">
+          @for (s of data.statuses; track s) {
+            <mat-option [value]="s">{{ s }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Line of Business -->
+    <div class="filter-section">
+      <p class="section-label">Line of Business</p>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Select line of business</mat-label>
+        <mat-select formControlName="linesOfBusiness" multiple aria-label="Filter by line of business">
+          @for (l of data.linesOfBusiness; track l) {
+            <mat-option [value]="l">{{ l }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Region -->
+    <div class="filter-section">
+      <p class="section-label">Region</p>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Select region</mat-label>
+        <mat-select formControlName="regions" multiple aria-label="Filter by region">
+          @for (r of data.regions; track r) {
+            <mat-option [value]="r">{{ r }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Premium -->
+    <div class="filter-section">
+      <p class="section-label">Premium</p>
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Min premium</mat-label>
+        <span matTextPrefix>$&nbsp;</span>
+        <input matInput type="number" formControlName="premiumMin"
+          aria-label="Minimum premium amount" min="0" />
+      </mat-form-field>
+    </div>
+
+    <!-- Effective Date Range -->
+    <div class="filter-section">
+      <p class="section-label">Effective Date</p>
+      <div class="date-row">
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input matInput [matDatepicker]="effFrom" formControlName="effectiveDateFrom"
+            aria-label="Effective date from" />
+          <mat-datepicker-toggle matIconSuffix [for]="effFrom" />
+          <mat-datepicker #effFrom />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input matInput [matDatepicker]="effTo" formControlName="effectiveDateTo"
+            aria-label="Effective date to" />
+          <mat-datepicker-toggle matIconSuffix [for]="effTo" />
+          <mat-datepicker #effTo />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Expiry Date Range -->
+    <div class="filter-section">
+      <p class="section-label">Expiry Date</p>
+      <div class="date-row">
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input matInput [matDatepicker]="expFrom" formControlName="expiryDateFrom"
+            aria-label="Expiry date from" />
+          <mat-datepicker-toggle matIconSuffix [for]="expFrom" />
+          <mat-datepicker #expFrom />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input matInput [matDatepicker]="expTo" formControlName="expiryDateTo"
+            aria-label="Expiry date to" />
+          <mat-datepicker-toggle matIconSuffix [for]="expTo" />
+          <mat-datepicker #expTo />
+        </mat-form-field>
+      </div>
+    </div>
+
+  </div>
+
+  <mat-divider />
+
+  <!-- Footer actions -->
+  <div class="sheet-footer">
+    <button mat-stroked-button type="button" (click)="clearAll()">
+      <mat-icon>filter_list_off</mat-icon>
+      Clear All
+    </button>
+    <button mat-flat-button type="button" (click)="apply()">
+      Apply Filters
+    </button>
+  </div>
+
+</div>

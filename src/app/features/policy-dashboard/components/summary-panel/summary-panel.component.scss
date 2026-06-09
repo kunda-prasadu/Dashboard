@@ -1,17 +1,3 @@
-/**
- * summary-panel.component.scss
- *
- * What: Layout and visual styles for the KPI summary panel.
- *
- * Why CSS custom properties for arc colors: The arc must stay visible on both
- * light and dark themes. Using --mat-sys-* tokens means it inherits the active
- * theme automatically without any JS.
- *
- * Why prefers-reduced-motion on the arc: Users with vestibular disorders can
- * be harmed by motion. Disabling the transition here means no JS is needed to
- * detect the preference — the OS setting is respected at the CSS level.
- */
-
 .summary-panel {
   background: var(--mat-sys-surface);
   border-radius: 12px;
@@ -19,103 +5,227 @@
   box-shadow: var(--mat-sys-level1);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+// Section headings
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 // ── Status cards ──────────────────────────────────────────────────────────────
 
 .status-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .status-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 16px 12px;
-  border-radius: 10px;
+  appearance: none;
+  font: inherit;
+  width: 100%;
+  text-align: left;
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-  user-select: none;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  transition: box-shadow 120ms ease, transform 120ms ease;
 
   &:hover, &:focus-visible {
-    transform: translateY(-2px);
     box-shadow: var(--mat-sys-level2);
+    transform: translateY(-1px);
     outline: 2px solid var(--mat-sys-primary);
     outline-offset: 2px;
   }
 
-  &.card-active    { background: #e8f5e9; }
-  &.card-pending   { background: #fff8e1; }
-  &.card-expired   { background: #fce4ec; }
-  &.card-cancelled { background: #f3e5f5; }
+  &.card-active    { border-left: 4px solid #43A047; }
+  &.card-pending   { border-left: 4px solid #FB8C00; }
+  &.card-expired   { border-left: 4px solid #E53935; }
+  &.card-cancelled { border-left: 4px solid #757575; }
 }
 
-.card-icon {
-  font-size: 28px;
-  width: 28px;
-  height: 28px;
+.card-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 
-  .card-active    & { color: #2e7d32; }
-  .card-pending   & { color: #e65100; }
-  .card-expired   & { color: #b71c1c; }
-  .card-cancelled & { color: #6a1b9a; }
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+  &.card-active-badge    { background: rgba(67, 160, 71, 0.15);  color: #43A047; }
+  &.card-pending-badge   { background: rgba(251, 140, 0, 0.15);  color: #FB8C00; }
+  &.card-expired-badge   { background: rgba(229, 57, 53, 0.15);  color: #E53935; }
+  &.card-cancelled-badge { background: rgba(117, 117, 117, 0.15); color: #757575; }
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .card-count {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface);
 }
 
 .card-label {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.7;
+  letter-spacing: 0.06em;
+  color: var(--mat-sys-on-surface-variant);
 }
 
-// ── Bottom row ────────────────────────────────────────────────────────────────
+.card-desc {
+  font-size: 0.72rem;
+  color: var(--mat-sys-on-surface-variant);
+  opacity: 0.8;
+}
 
-.bottom-row {
+// ── KEY METRICS row ───────────────────────────────────────────────────────────
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+// ── Expiry card ───────────────────────────────────────────────────────────────
+
+.expiry-card {
+  appearance: none;
+  font: inherit;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
+  transition: box-shadow 120ms ease, transform 120ms ease;
+
+  &:hover, &:focus-visible {
+    box-shadow: var(--mat-sys-level2);
+    transform: translateY(-1px);
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
 }
 
-.section-title {
+.expiry-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--mat-sys-on-surface-variant);
-  margin: 0 0 12px;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.expiry-count {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-error);
+}
+
+.expiry-sub {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.expiry-bar-track {
+  display: block;
+  height: 6px;
+  background: var(--mat-sys-surface-container-high);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.expiry-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--mat-sys-error);
+  border-radius: 100px;
+  transition: width 400ms ease;
+  @media (prefers-reduced-motion: reduce) { transition: none; }
 }
 
 // ── GWP bars ──────────────────────────────────────────────────────────────────
 
 .gwp-section {
-  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline-variant);
 }
 
-.total-premium {
-  font-size: 0.82rem;
-  color: var(--mat-sys-on-surface-variant);
-  margin-bottom: 12px;
+.gwp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 
-  strong {
-    color: var(--mat-sys-on-surface);
-    font-weight: 600;
-  }
+.gwp-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.gwp-total {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+  font-variant-numeric: tabular-nums;
 }
 
 .lob-bars {
@@ -126,9 +236,16 @@
 
 .lob-row {
   display: grid;
-  grid-template-columns: 80px 1fr 90px;
+  grid-template-columns: 24px 70px 1fr 36px 90px;
   align-items: center;
   gap: 8px;
+}
+
+.lob-icon-wrap {
+  display: flex;
+  align-items: center;
+  color: var(--mat-sys-on-surface-variant);
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
 }
 
 .lob-label {
@@ -145,16 +262,23 @@
 }
 
 .bar-fill {
+  display: block;
   height: 100%;
   border-radius: 100px;
   transition: width 300ms ease;
-
   @media (prefers-reduced-motion: reduce) { transition: none; }
 
   &.bar-property { background: #1565c0; }
   &.bar-casualty { background: #283593; }
   &.bar-ah       { background: #00695c; }
   &.bar-marine   { background: #0277bd; }
+}
+
+.lob-pct {
+  font-size: 0.7rem;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .lob-amount {
@@ -168,68 +292,4 @@
   font-size: 0.8rem;
   color: var(--mat-sys-on-surface-variant);
   margin: 0;
-}
-
-// ── Expiry arc ────────────────────────────────────────────────────────────────
-
-.expiry-section {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.arc-button {
-  position: relative;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: 4px;
-  }
-
-  &:hover .arc-fill { opacity: 0.85; }
-}
-
-.arc-svg {
-  display: block;
-}
-
-.arc-track {
-  stroke: var(--mat-sys-surface-container-high);
-}
-
-.arc-fill {
-  stroke: var(--mat-sys-error);
-  transition: stroke-dashoffset 600ms ease;
-
-  @media (prefers-reduced-motion: reduce) { transition: none; }
-}
-
-.arc-label {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
-}
-
-.arc-count {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--mat-sys-on-surface);
-  line-height: 1;
-}
-
-.arc-sub {
-  font-size: 0.65rem;
-  color: var(--mat-sys-on-surface-variant);
-  white-space: nowrap;
 }
