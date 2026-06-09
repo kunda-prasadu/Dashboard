@@ -1,5 +1,8 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
+# Mock API generated data (regenerate with npm run generate:mock)
+mock-api/db.json
+
 # Compiled output
 /dist
 /tmp
