@@ -136,18 +136,38 @@ Record of AI interactions — accepted, challenged, or overridden decisions.
 
 ## Phase 9 — Test Coverage (CH-110)
 
-**Accepted:** Istanbul branch coverage as the primary gap metric. Statements (92%), functions (92%), and lines (96%) were already strong. Branches sat at 73.68% — the only metric below the 80% target — because every truthy branch in the "optional filter param" conditionals was untested.
+**Accepted:** Istanbul branch coverage as the primary gap metric. Statements (92%), functions (92%), and lines (96%) were already strong. Branches sat at 73.68% — the only metric below the 80% target — because every truthy branch in the optional-filter-param conditionals was untested.
 
-**Root cause analysis:** `buildFilterParams` in `PolicyApiService` had 7 `if` guards for `premiumMin`, `premiumMax`, four date-range fields, and `flaggedForReview`. All existing tests called `getAll` with `{ search, statuses, regions }` only — every truthy branch was dead to Istanbul.
+**Root cause analysis:** `buildFilterParams()` in `PolicyApiService` had 7 `if` guards for `premiumMin`, `premiumMax`, four date-range fields, and `flaggedForReview`. All existing `getAll` calls only passed `{ search, statuses, regions }` — every truthy branch was dead code to Istanbul.
 
-**Accepted:** One new `getAll` test with all optional params populated covers all 7 truthy branches in one sweep instead of adding 7 individual tests.
+**Accepted:** One new `getAll` test with all optional params populated covers all 7 truthy branches in one sweep rather than 7 individual tests.
 
-**Accepted:** `policy-filter.component.spec.ts` needed two additions: (1) `mapToStoreFilter` called with all four date fields set covers `effectiveDateTo`, `expiryDateFrom`, `expiryDateTo` truthy branches; (2) a URL-seed test with `premiumMin` and all date URL params hits the `urlParamsToFilter` ternary and all `patchFormFromFilter` date-conversion branches simultaneously.
+**Accepted:** Two `policy-filter` additions: (1) `mapToStoreFilter` with all four date fields set — covers `effectiveDateTo`, `expiryDateFrom`, `expiryDateTo` truthy branches; (2) a URL-seed test with `premiumMin` and all date URL params simultaneously — covers the `urlParamsToFilter` ternary and all `patchFormFromFilter` date-conversion branches.
 
-**Accepted:** `renewPolicy('unknown-id')` test in the store spec. The `if (!original) return;` early-exit was never reached because every existing test called with a known ID. A single call with a non-existent ID exercises the guard and asserts `api.patch` was not called — clean behavioral test.
+**Accepted:** `renewPolicy('unknown-id')` test in the store spec. The `if (!original) return;` early-exit was never reached because every existing test used a known ID. A single call with a non-existent ID exercises the guard and asserts `api.patch` was not called.
 
-**Accepted:** Stored page size test by providing a `StorageService` stub returning `50` (a valid `PAGE_SIZE_OPTIONS` value). This hits the `n && PAGE_SIZE_OPTIONS.includes(n) ? n : 25` truthy branch in the IIFE field initializer that normal tests skip (localStorage returns null by default in JSDOM).
+**Accepted:** Stored page size test by providing a `StorageService` stub returning `50` (a valid `PAGE_SIZE_OPTIONS` value). This hits the `n && PAGE_SIZE_OPTIONS.includes(n) ? n : 25` truthy branch in the IIFE field initialiser that normal tests skip (localStorage returns null in JSDOM by default).
 
-**Accepted:** `allSelected()` false-branch test in `policy-table.component.spec.ts`. The `ids.length > 0 &&` short-circuit's false path (when the policy list is empty) was never reached because the store stub always had 2 policies. Setting `storeSpy.policies.set([])` covers it.
+**Accepted:** `allSelected()` false-branch test in `policy-table.component.spec.ts`. The `ids.length > 0 &&` short-circuit false path (empty policy list) was never reached because the store stub always had 2 policies. Setting `storeSpy.policies.set([])` covers it.
 
-**Result:** 107/107 tests pass. Branch coverage: 73.68% → **86.46%** (+12.78pp). All four coverage metrics now exceed 80%: Statements 94.88%, Branches 86.46%, Functions 92.3%, Lines 96.8%.
+**Result:** 107/107 tests pass. Branch coverage: 73.68% → **86.46%** (+12.78 pp). All four coverage metrics now exceed 80%.
+
+---
+
+## Phase 10 — Documentation + Final Verification (CH-111)
+
+**Accepted:** Full rewrite of all four documentation files for enterprise-quality completeness. The previous docs were accurate but partial — they were written incrementally per phase and lacked cross-phase coherence, a full API contract table, and a deferred-features register.
+
+**Accepted:** Numbered `DD-###` entries in `DESIGN_DECISIONS.md` for traceability to commit messages and PR descriptions. 27 decisions documented with explicit "chosen / rejected / why" structure.
+
+**Accepted:** Formal tech debt register (TD-001 to TD-009) in `TRADE_OFFS.md`. Separate from the architectural trade-offs section — tech debt items are actionable backlog entries with priority, location, and upgrade path.
+
+**Accepted:** "What was deliberately deferred" section in `TRADE_OFFS.md` documenting E2E tests, MFE, virtual scrolling, full i18n, FX conversion, RBAC, and SSR `TransferState` pre-fetching with explicit upgrade paths. Deferred scope is not forgotten — it's documented.
+
+**Accepted:** README rewrite with: exact two-terminal setup instructions, full scripts table, annotated project structure, complete API contract table with all query parameters and response shapes, and Policy model interface.
+
+**Accepted:** ARCHITECTURE.md rewrite with: ASCII layer diagram (Browser → Angular → Express), `PolicyStore` signal map, two data flow diagrams (normal load + optimistic flag/rollback), full component hierarchy, and per-service responsibility notes.
+
+**Overrode:** Phase 10 prompt said "verify AI journal has an entry per phase." Phases 9 and 10 entries were absent — added both in this phase.
+
+**Why documentation matters:** Documentation at this level serves three audiences: (1) the code reviewer assessing the architectural decisions; (2) future maintainers understanding why something was done, not just what was done; (3) the tech debt register as a living backlog. Incremental per-phase docs written in the moment are accurate but lack synthesis. Phase 10 provides the synthesis pass.
