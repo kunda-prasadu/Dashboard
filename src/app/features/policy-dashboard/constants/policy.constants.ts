@@ -33,7 +33,8 @@ export const CURRENCIES: readonly Currency[] = [
 export const PAGE_SIZE_OPTIONS: readonly number[] = [10, 25, 50, 100] as const;
 
 export const STORAGE_KEYS = {
-  THEME: 'policy-hub:theme',
+  THEME:   'policy-hub:theme',
+  PALETTE: 'policy-hub:palette',
   PAGE_SIZE: 'policy-hub:page-size',
   FILTERS: 'policy-hub:filters'
 } as const;

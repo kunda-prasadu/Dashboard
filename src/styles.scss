@@ -36,10 +36,11 @@ html {
   --ph-on-surface:        #1a1c1e;
   --ph-on-surface-muted:  #5c6166;
 
-  // Brand
-  --ph-primary:           #0b57d0;
-  --ph-on-primary:        #ffffff;
-  --ph-primary-container: #d3e3fd;
+  // Brand — tracks the active palette via --mat-sys-* so all palette switches
+  // automatically update the toolbar, focus rings, and any custom elements.
+  --ph-primary:           var(--mat-sys-primary);
+  --ph-on-primary:        var(--mat-sys-on-primary);
+  --ph-primary-container: var(--mat-sys-primary-container);
 
   // Status colours — WCAG AA on --ph-surface (#f8f9fa)
   --ph-active:    #1a7a3f;   // 5.1:1 ✓
@@ -107,11 +108,6 @@ html.dark-theme {
   --ph-surface-variant:   #1e2024;
   --ph-on-surface:        #e2e3e7;
   --ph-on-surface-muted:  #8d939a;
-
-  // Brand
-  --ph-primary:           #a8c7fa;
-  --ph-on-primary:        #00315e;
-  --ph-primary-container: #004787;
 
   // Status colours — WCAG AA on --ph-surface (#111317)
   --ph-active:    #6fcf97;   // 5.3:1 ✓
@@ -204,6 +200,95 @@ a:focus-visible,
 .snack-error .mdc-snackbar__surface {
   background: #c0392b !important;
   color: #fff !important;
+}
+
+// ── Color palettes ────────────────────────────────────────────────────────────
+// Each palette calls mat.theme() to regenerate the FULL M3 tonal palette so that
+// ALL Material components (buttons, chips, checkboxes, sliders…) respond to the
+// active palette. --ph-primary auto-tracks --mat-sys-primary via var() in :root.
+//
+// Palette-to-Material mapping:
+//   azure   → mat.$azure-palette   (default — no extra block needed)
+//   forest  → mat.$green-palette
+//   crimson → mat.$red-palette
+//   amber   → mat.$orange-palette
+//   violet  → mat.$violet-palette
+//   teal    → mat.$cyan-palette
+//   rose    → mat.$rose-palette
+//   indigo  → mat.$blue-palette
+//   emerald → mat.$spring-green-palette
+//   slate   → mat.$chartreuse-palette
+
+// Forest — green
+html.palette-forest {
+  @include mat.theme((color: (primary: mat.$green-palette, tertiary: mat.$cyan-palette)));
+}
+html.palette-forest.dark-theme {
+  @include mat.theme((color: (primary: mat.$green-palette, tertiary: mat.$cyan-palette, theme-type: dark)));
+}
+
+// Crimson — red
+html.palette-crimson {
+  @include mat.theme((color: (primary: mat.$red-palette, tertiary: mat.$orange-palette)));
+}
+html.palette-crimson.dark-theme {
+  @include mat.theme((color: (primary: mat.$red-palette, tertiary: mat.$orange-palette, theme-type: dark)));
+}
+
+// Amber — orange
+html.palette-amber {
+  @include mat.theme((color: (primary: mat.$orange-palette, tertiary: mat.$yellow-palette)));
+}
+html.palette-amber.dark-theme {
+  @include mat.theme((color: (primary: mat.$orange-palette, tertiary: mat.$yellow-palette, theme-type: dark)));
+}
+
+// Violet — purple
+html.palette-violet {
+  @include mat.theme((color: (primary: mat.$violet-palette, tertiary: mat.$rose-palette)));
+}
+html.palette-violet.dark-theme {
+  @include mat.theme((color: (primary: mat.$violet-palette, tertiary: mat.$rose-palette, theme-type: dark)));
+}
+
+// Teal — cyan
+html.palette-teal {
+  @include mat.theme((color: (primary: mat.$cyan-palette, tertiary: mat.$green-palette)));
+}
+html.palette-teal.dark-theme {
+  @include mat.theme((color: (primary: mat.$cyan-palette, tertiary: mat.$green-palette, theme-type: dark)));
+}
+
+// Rose — pink/magenta
+html.palette-rose {
+  @include mat.theme((color: (primary: mat.$rose-palette, tertiary: mat.$violet-palette)));
+}
+html.palette-rose.dark-theme {
+  @include mat.theme((color: (primary: mat.$rose-palette, tertiary: mat.$violet-palette, theme-type: dark)));
+}
+
+// Indigo — deep blue
+html.palette-indigo {
+  @include mat.theme((color: (primary: mat.$blue-palette, tertiary: mat.$violet-palette)));
+}
+html.palette-indigo.dark-theme {
+  @include mat.theme((color: (primary: mat.$blue-palette, tertiary: mat.$violet-palette, theme-type: dark)));
+}
+
+// Emerald — spring green
+html.palette-emerald {
+  @include mat.theme((color: (primary: mat.$spring-green-palette, tertiary: mat.$cyan-palette)));
+}
+html.palette-emerald.dark-theme {
+  @include mat.theme((color: (primary: mat.$spring-green-palette, tertiary: mat.$cyan-palette, theme-type: dark)));
+}
+
+// Slate — chartreuse (warm neutral)
+html.palette-slate {
+  @include mat.theme((color: (primary: mat.$chartreuse-palette, tertiary: mat.$green-palette)));
+}
+html.palette-slate.dark-theme {
+  @include mat.theme((color: (primary: mat.$chartreuse-palette, tertiary: mat.$green-palette, theme-type: dark)));
 }
 
 // ── Filter bottom sheet ───────────────────────────────────────────────────────
